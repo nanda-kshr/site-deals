@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import Order from "@/models/Order";
 import mongoose from "mongoose";
-import crypto from "crypto";
+
 
 interface WebhookPayload {
   data: {
@@ -10,7 +10,7 @@ interface WebhookPayload {
       order_id: string;
       order_amount: number;
       order_currency: string;
-      order_tags: null | any;
+      order_tags: null | Record<string, unknown>;
     };
     payment?: {
       cf_payment_id?: string;
@@ -21,7 +21,10 @@ interface WebhookPayload {
       payment_time?: string;
       bank_reference?: string;
       auth_id?: null | string;
-      payment_method?: any;
+      payment_method?: {
+        payment_method_type?: string;
+        payment_method_details?: Record<string, unknown>;
+      };
       payment_group?: string;
     };
     customer_details?: {
@@ -95,9 +98,9 @@ export async function POST(request: Request) {
       data.payment?.payment_status && 
       ["completed", "success", "paid"].includes(data.payment.payment_status.toLowerCase())
     ) {
-      order.status = "paid";
+      order.status = "processing"; // Using a valid status from the enum
     } else {
-      order.status = data.payment?.payment_status;
+      order.status = "pending"; // Default to a valid status
       console.warn(
         `Unexpected paymentStatus for order ${data.order.order_id}: ${data.payment?.payment_status}`
       );

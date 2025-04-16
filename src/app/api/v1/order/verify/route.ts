@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
-import Order, { IOrder } from '@/models/Order';
+import Order from '@/models/Order';
 
 interface VerifyRequest {
   orderId: string;
@@ -20,7 +20,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Order ID is required' }, { status: 400 });
     }
 
-    const orderDoc = await Order.findById(orderId).select('status').lean<IOrder>();
+    const orderDoc = await Order.findById(orderId).select('status');
 
     if (!orderDoc) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });

@@ -1,7 +1,7 @@
 
 export type Product = {
-  createdAt: any;
-  id: string;
+  createdAt: Date | string;
+  _id: string;
   title: string;
   srcUrl: string;
   gallery?: string[];
@@ -10,5 +10,17 @@ export type Product = {
   rating: number;
   designTypes?: string[];
   description?: string;
-  [key: string]: any;
-};
+  [key: string]: string | number | string[] | Date | undefined;
+
+}
+export interface IProduct {
+  id:string;
+  name: string;
+  srcUrl: string;
+  price: number;
+  rating: number;
+  discountPercentage: number;
+  description?: string;
+  createdAt?: Date;
+  __v?: number;
+}

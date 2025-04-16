@@ -1,7 +1,6 @@
 import React from 'react';
 import { integralCF } from "@/styles/fonts";
 import { cn } from "@/lib/utils";
-import { Separator } from "@/components/ui/separator";
 import * as motion from "framer-motion/client";
 import Link from "next/link";
 
@@ -59,7 +58,7 @@ export default function TermsPage() {
                             
                             <div>
                                 <h3 className="font-bold text-lg mb-2">2. Definitions</h3>
-                                <p>"We", "our", "us", or "Site Deals" refers to the owner and operator of the website. "Website" refers to sitedeals.com or any associated domains. "You" refers to the user or viewer of our website and customer of our products.</p>
+                                <p>&quot;We&quot;, &quot;our&quot;, &quot;us&quot;, or &quot;Site Deals&quot; refers to the owner and operator of the website. &quot;Website&quot; refers to sitedeals.com or any associated domains. &quot;You&quot; refers to the user or viewer of our website and customer of our products.</p>
                             </div>
                             
                             <div>
@@ -79,7 +78,7 @@ export default function TermsPage() {
                             
                             <div>
                                 <h3 className="font-bold text-lg mb-2">6. Product Information</h3>
-                                <p>While we make every effort to display products accurately, we cannot guarantee that your computer's display will accurately reflect the actual product. We reserve the right to limit quantities, discontinue products, or alter specifications without notice.</p>
+                                <p>While we make every effort to display products accurately, we cannot guarantee that your computer&apos;s display will accurately reflect the actual product. We reserve the right to limit quantities, discontinue products, or alter specifications without notice.</p>
                             </div>
                             
                             <div>
@@ -94,7 +93,7 @@ export default function TermsPage() {
                             
                             <div>
                                 <h3 className="font-bold text-lg mb-2">9. Governing Law</h3>
-                                <p>These terms and conditions shall be governed by and construed in accordance with the laws of [Your Country], and any disputes will be subject to the exclusive jurisdiction of the courts of [Your Country].</p>
+                                <p>These terms and conditions shall be governed by and construed in accordance with the laws of the United States, and any disputes will be subject to the exclusive jurisdiction of the courts of the United States.</p>
                             </div>
                             
                             <div>
@@ -124,7 +123,7 @@ export default function TermsPage() {
                             
                             <div>
                                 <h3 className="font-bold text-lg mb-2">2. How We Use Your Information</h3>
-                                <p>We use your information to process transactions, send order confirmations, respond to inquiries, send marketing communications (if you've opted in), improve our website, and comply with legal obligations.</p>
+                                <p>We use your information to process transactions, send order confirmations, respond to inquiries, send marketing communications (if you&apos;ve opted in), improve our website, and comply with legal obligations.</p>
                             </div>
                             
                             <div>
@@ -149,7 +148,7 @@ export default function TermsPage() {
                             
                             <div>
                                 <h3 className="font-bold text-lg mb-2">7. Changes to Privacy Policy</h3>
-                                <p>We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last Updated" date.</p>
+                                <p>We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the &quot;Last Updated&quot; date.</p>
                             </div>
                         </div>
                     </motion.div>
@@ -199,7 +198,7 @@ export default function TermsPage() {
                             
                             <div>
                                 <h3 className="font-bold text-lg mb-2">7. Late or Missing Refunds</h3>
-                                <p>If you haven't received a refund yet, first check your bank account again. Then contact your credit card company, it may take some time before your refund is officially posted. If you've done all of this and you still have not received your refund, please contact us at sitedeals999@gmail.com.</p>
+                                <p>If you haven&apos;t received a refund yet, first check your bank account again. Then contact your credit card company, it may take some time before your refund is officially posted. If you&apos;ve done all of this and you still have not received your refund, please contact us at sitedeals999@gmail.com.</p>
                             </div>
                         </div>
                     </motion.div>

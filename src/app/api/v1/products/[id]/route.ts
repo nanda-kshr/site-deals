@@ -1,60 +1,51 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import Product, { IProduct } from '@/models/Product';
-import mongoose from 'mongoose';
 
-interface ProductResponse {
-  _id: string;
-  name: string;
-  srcUrl: string;
-  gallery: string[];
-  price: number;
-  discountPercentage: number;
-  rating: number;
-  designTypes: string[];
-  description?: string;
-}
-
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest) {
   try {
+    const productId = request?.nextUrl?.searchParams.get('orderId')
+   
+    if (!productId) {
+      return NextResponse.json(
+        { error: 'Product ID is required' },
+        { status: 400 }
+      );
+    }
+
     await connectDB();
-    const { id } = params;
-
-    if (!mongoose.isValidObjectId(id)) {
-      return NextResponse.json({ error: 'Invalid product ID' }, { status: 400 });
+    
+    // Use the interface for proper typing
+    const product = await Product.findById(productId)
+        .select('name srcUrl price rating discountPercentage description category stock createdAt')
+        .lean() as unknown as IProduct;
+    
+    if (!product) {
+      return NextResponse.json(
+        { error: 'Product not found' },
+        { status: 404 }
+      );
     }
 
-    const productDoc = await Product.findById(id)
-      .select('name srcUrl gallery price discountPercentage rating designTypes description')
-      .lean<IProduct & { _id: mongoose.Types.ObjectId }>();
-
-    if (!productDoc) {
-      console.warn(`No product found with ID: ${id}`);
-    } else {
-      console.log('Product Document:', productDoc);
-    }
-    if (!productDoc) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 });
-    }
-
-    const product: ProductResponse = {
-      _id: productDoc._id.toString(),
-      name: productDoc.name,
-      srcUrl: productDoc.srcUrl,
-      gallery: productDoc.gallery,
-      price: productDoc.price,
-      discountPercentage: productDoc.discountPercentage,
-      rating: productDoc.rating,
-      designTypes: productDoc.designTypes,
-      description: productDoc.description,
+    const productResponse = {
+      _id: product._id?.toString() || "",
+      name: product.name,
+      srcUrl: product.srcUrl,
+      price: product.price,
+      rating: product.rating,
+      discount: product.discountPercentage,
+      description: product.description,
+      category: product.category,
+      stock: product.stock,
+      createdAt: product.createdAt
     };
 
-    return NextResponse.json(product, { status: 200 });
+    return NextResponse.json(productResponse, { status: 200 });
   } catch (error) {
     console.error('Error fetching product:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    );
   }
 }

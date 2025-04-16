@@ -7,7 +7,7 @@ import Link from "next/link";
 import React from "react";
 
 const CartBtn = () => {
-  const { cart } = useAppSelector((state: RootState) => state.carts);
+  const cart = useAppSelector((state: RootState) => state.carts);
 
   return (
     <Link href="/cart" className="relative mr-[14px] p-1" >

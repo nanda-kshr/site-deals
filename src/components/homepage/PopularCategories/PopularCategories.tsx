@@ -4,7 +4,7 @@ import React from "react";
 import * as motion from "framer-motion/client";
 import CategoryCard from "./CategoryCard";
 import { LucideIcon } from "lucide-react"; // For typing
-
+import { Monitor, Utensils, ToyBrick, Book } from "lucide-react";
 type Category = {
   title: string;
   description: string;
@@ -14,7 +14,7 @@ type Category = {
 };
 
 const PopularCategories = () => {
-  const { Monitor, Utensils, ToyBrick, Book } = require("lucide-react");
+  
 
   const categories: Category[] = [
     {

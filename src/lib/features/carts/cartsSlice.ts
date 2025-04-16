@@ -11,6 +11,7 @@ interface CartItem {
 }
 
 interface CartState {
+  totalQuantities: number;
   items: CartItem[];
   totalPrice: number;
   adjustedTotalPrice: number;
@@ -20,6 +21,7 @@ const initialState: CartState = {
   items: [],
   totalPrice: 0,
   adjustedTotalPrice: 0,
+  totalQuantities: 0,
 };
 
 const cartsSlice = createSlice({

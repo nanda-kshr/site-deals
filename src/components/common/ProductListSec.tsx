@@ -33,7 +33,8 @@ const ProductListSec = ({
     price: 0,
     discount: 0,
     rating: 0,
-    createdAt: undefined,
+    createdAt: "",
+    _id: ""
   };
 
   // Ensure exactly 4 products

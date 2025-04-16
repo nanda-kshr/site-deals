@@ -1,6 +1,8 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IProduct extends Document {
+  category: Schema.Types.ObjectId | string;
+  stock: number;
   name: string;
   srcUrl: string;
   gallery: string[];
@@ -23,6 +25,7 @@ const ProductSchema: Schema = new Schema(
     rating: { type: Number, default: 0 },
     designTypes: { type: [String], default: [] },
     description: { type: String },
+    stock: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

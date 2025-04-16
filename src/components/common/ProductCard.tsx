@@ -27,7 +27,7 @@ const ProductCard = ({ data }: ProductCardProps) => {
     e.preventDefault();
     dispatch(
       addToCart({
-        id: data.id,
+        id: String(data.id),
         title: data.title,
         srcUrl: data.srcUrl,
         price: data.price,
@@ -51,7 +51,7 @@ const ProductCard = ({ data }: ProductCardProps) => {
             -{discountPercentage}% off
           </span>
         )}
-        {(data.stock ?? 100) < 5 && (
+        {(typeof data.stock === 'number' && data.stock < 5) && (
           <span className="absolute bottom-2 left-2 text-red-600 text-xs font-medium z-10">
             {data.stock ? `Only ${data.stock} left!` : "Low Stock"}
           </span>
@@ -103,7 +103,7 @@ const ProductCard = ({ data }: ProductCardProps) => {
             )}
           </div>
           {data.soldCount && (
-            <p className="text-xs text-black/60">{data.soldCount} sold</p>
+            <p className="text-xs text-black/60">{String(data.soldCount)} sold</p>
           )}
           <div className="flex gap-2">
             <button

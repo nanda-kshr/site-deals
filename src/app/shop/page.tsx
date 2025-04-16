@@ -99,6 +99,7 @@ export default function ShopPage() {
         setTotalProducts(total);
 
         const mappedProducts: Product[] = productList
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           .map((item: any, index: number) => {
             try {
               return {
@@ -132,7 +133,7 @@ export default function ShopPage() {
         });
 
         setProducts(sortedProducts);
-      } catch (err: any) {
+      } catch (err: Error | unknown) {
         console.error("Fetch error:", err);
         setError("Failed to load products. Please try again.");
       } finally {
@@ -294,7 +295,7 @@ export default function ShopPage() {
               >
                 {products.map((product) => (
                   <motion.div
-                    key={product.id}
+                    key={typeof product.id === 'string' || typeof product.id === 'number' ? product.id : String(product.id)}
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.3 }}

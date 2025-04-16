@@ -2,9 +2,9 @@
 import React from 'react';
 import { integralCF } from "@/styles/fonts";
 import { cn } from "@/lib/utils";
-import { Separator } from "@/components/ui/separator";
+
 import * as motion from "framer-motion/client";
-import Link from "next/link";
+
 
 export default function ContactPage() {
     return (
@@ -89,7 +89,6 @@ export default function ContactPage() {
                             </div>
                         </div>
                         
-                        <Separator className="my-8" />
                         
                         <div>
                             <h3 className="font-medium mb-4">Connect With Us</h3>

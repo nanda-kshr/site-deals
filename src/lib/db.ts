@@ -6,9 +6,7 @@ if (!MONGODB_URI) {
   throw new Error("Please define MONGODB_URI in .env");
 }
 
-declare global {
-  var _mongoosePromise: Promise<typeof mongoose> | undefined;
-}
+
 
 class Singleton {
   private static _instance: Singleton;
@@ -23,9 +21,6 @@ class Singleton {
       .then(() => console.log("MongoDB connected via Mongoose"))
       .catch((err) => console.error("MongoDB connection error:", err));
 
-    if (process.env.NODE_ENV === "development") {
-      global._mongoosePromise = this.mongoosePromise;
-    }
   }
 
   public static get instance() {
