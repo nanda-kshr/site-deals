@@ -44,7 +44,7 @@ export default function OrderPage() {
       setOrderDetails(data);
     } catch (err: Error | unknown) {
       const errorMessage = err instanceof Error ? err.message : "Something went wrong. Please try again.";
-      setError(errorMessage);
+      setError(errorMessage); 
     } finally {
       setIsLoading(false);
     }
