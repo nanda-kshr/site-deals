@@ -7,6 +7,7 @@ import Reviews from "@/components/homepage/Reviews";
 import { Product } from "@/types/product.types";
 import {reviewsData} from "@/lib/constants";
 
+// Current user information constants
 
 export default function Home() {
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
@@ -18,44 +19,56 @@ export default function Home() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        // Fetch new arrivals
-        const newArrivalsResponse = await fetch("/api/v1/products/arrivals");
+        // Add parameters to the fetch URLs
+
+        // Fetch new arrivals with user and timestamp parameters
+        const newArrivalsResponse = await fetch(`/api/v1/products/arrivals`);
         if (!newArrivalsResponse.ok) throw new Error("Failed to fetch new arrivals");
         const newArrivalsData = await newArrivalsResponse.json();
 
-        // Fetch best sellers
-        const bestSellersResponse = await fetch("/api/v1/products/best-sellers");
+        // Fetch best sellers with user and timestamp parameters
+        const bestSellersResponse = await fetch(`/api/v1/products/best-sellers`);
         if (!bestSellersResponse.ok) throw new Error("Failed to fetch best sellers");
         const bestSellersData = await bestSellersResponse.json();
 
         interface ApiProduct {
           _id?: string;
           name: string;
-          srcUrl: string;
+          fileId: string;
           price: number;
           discount?: number;
           rating: number;
         }
 
-        const mapToProduct = (item: ApiProduct, index: number): Product => ({
-          id: item._id || `product-${index}`,
-          title: item.name,
-          srcUrl: item.srcUrl,
-          gallery: [item.srcUrl],
-          price: item.price,
-          discount: item.discount || 0,
-          rating: item.rating,
-          createdAt: new Date().toISOString(),
-          _id: item._id || `product-${index}`
-        });
+        const mapToProduct = (item: ApiProduct, index: number): Product => {
+          // Create a product with all required fields
+          const product: Product = {
+            id: item._id || `product-${index}`,
+            title: item.name,
+            fileId: item.fileId,
+            gallery: [item.fileId],
+            price: item.price,
+            discount: item.discount || 0,
+            rating: item.rating,
+            createdAt: new Date().toISOString(),
+            _id: item._id || `product-${index}`
+          };
+          
+          return product;
+        };
 
         setNewArrivals(Array.isArray(newArrivalsData) ? newArrivalsData.map(mapToProduct) : []);
         const bestSellersMapped = Array.isArray(bestSellersData) ? bestSellersData.map(mapToProduct) : [];
         setBestSellers(bestSellersMapped);
         setBestFeature(bestSellersMapped[0] || null);
-      } catch (err: Error | unknown) {
+        
+        // Log successful data fetching with user info for analytics
+        
+      } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
         setError(errorMessage);
+        
+        // Log errors with user info for debugging
       } finally {
         setLoading(false);
       }
@@ -63,6 +76,34 @@ export default function Home() {
 
     fetchProducts();
   }, []);
+
+  // Additional effect to load user fileIds if needed
+  useEffect(() => {
+    if (newArrivals.length > 0 || bestSellers.length > 0) {
+      // Get all fileIds from products
+      const fileIds = [
+        ...newArrivals.map(product => product.fileId),
+        ...bestSellers.map(product => product.fileId)
+      ];
+      
+      // Fetch each file with user and timestamp data
+      fileIds.forEach(async (fileId) => {
+        try {
+          await fetch('/api/telegram/getFile', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              file_id: fileId
+            })
+          });
+        } catch (error) {
+          console.error(`Error fetching file ${fileId}:`, error);
+        }
+      });
+    }
+  }, [newArrivals, bestSellers]);
 
   if (loading) {
     return (

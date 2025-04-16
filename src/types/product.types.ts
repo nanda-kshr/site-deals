@@ -3,7 +3,7 @@ export type Product = {
   createdAt: Date | string;
   _id: string;
   title: string;
-  srcUrl: string;
+  fileId: string;
   gallery?: string[];
   price: number;
   discount: number;
@@ -16,7 +16,7 @@ export type Product = {
 export interface IProduct {
   id:string;
   name: string;
-  srcUrl: string;
+  fileId: string;
   price: number;
   rating: number;
   discountPercentage: number;

@@ -14,7 +14,7 @@ import Image from "next/image";
 import ResTopNavbar from "./ResTopNavbar";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/lib/hooks/redux";
-import { Search } from "lucide-react";
+import { Menu, Search } from "lucide-react";
 
 const data: NavMenu = [
   {
@@ -82,9 +82,13 @@ const TopNavbar = () => {
     <nav className="sticky top-0 bg-white z-20 shadow-sm">
       <div className="flex relative max-w-frame mx-[var(--content-margin)] items-center justify-between py-5 md:py-6 px-4 xl:px-0">
         <div className="flex items-center">
+          {/* Hamburger menu for mobile - Now with explicit Menu icon */}
           <div className="block md:hidden mr-4">
-            <ResTopNavbar data={data} />
+            <ResTopNavbar data={data}>
+              <Menu size={24} className="text-black" />
+            </ResTopNavbar>
           </div>
+          
           <Link
             href="/"
             className={cn([
@@ -97,11 +101,12 @@ const TopNavbar = () => {
           <NavigationMenu className="hidden md:flex mr-6">
             <NavigationMenuList>
               {data.map((item) => (
+
                 <React.Fragment key={item.id}>
-                  <Link href={item.url || '#'}>
                   {item.type === "MenuItem" && (
                     <MenuItem label={item.label} url={item.url} />
                   )}
+                  <Link href={String(item.url)}>
                   {item.type === "MenuList" && (
                     <MenuList data={item.children} label={item.label} />
                   )}
@@ -112,7 +117,7 @@ const TopNavbar = () => {
           </NavigationMenu>
         </div>
 
-
+        {/* Search Bar - Desktop */}
         <div className="hidden md:flex items-center flex-1 max-w-md mx-4">
           <form onSubmit={handleSearch} className="w-full relative group">
             <input
@@ -133,7 +138,7 @@ const TopNavbar = () => {
         </div>
 
         <div className="flex items-center">
-
+          {/* Search Icon - Mobile */}
           <button 
             className="md:hidden p-1 mr-4"
             onClick={() => setIsSearchOpen(!isSearchOpen)}
@@ -142,21 +147,12 @@ const TopNavbar = () => {
             <Search size={22} />
           </button>
           
-          <Link href="/#signin" className="p-1 mr-4">
-            <Image
-              priority
-              src="/icons/user.svg"
-              height={100}
-              width={100}
-              alt="user"
-              className="max-w-[22px] max-h-[22px]"
-            />
-          </Link>
+
           <CartBtn />
         </div>
       </div>
 
-
+      {/* Mobile Search Bar - Expandable */}
       {isSearchOpen && (
         <div className="md:hidden px-4 pb-4 bg-white border-t border-black/10">
           <form onSubmit={handleSearch} className="w-full relative">

@@ -5,7 +5,7 @@ import Image from "next/image";
 import React, { useState } from "react";
 
 const PhotoSection = ({ data }: { data: Product }) => {
-  const [selected, setSelected] = useState<string>(data.srcUrl);
+  const [selected, setSelected] = useState<string>(data.fileId);
 
   return (
     <div className="flex flex-col-reverse lg:flex-row lg:space-x-3.5">

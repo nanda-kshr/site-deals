@@ -5,7 +5,7 @@ import Product from '@/models/Product';
 interface ProductResponse {
   _id: string;
   name: string;
-  srcUrl: string;
+  fileId: string;
   price: number;
   rating: number;
   discount: number;
@@ -16,7 +16,7 @@ export async function GET() {
     await connectDB();
     // Fetch new arrivals, sorted by createdAt
     const products = await Product.find()
-      .select('name srcUrl price rating discountPercentage')
+      .select('name fileId price rating discountPercentage')
       .sort({ createdAt: -1 })
       .limit(10)
       .lean()
@@ -24,7 +24,7 @@ export async function GET() {
         docs.map((doc) => ({
           _id: doc._id?.toString() || "",
           name: doc.name,
-          srcUrl: doc.srcUrl,
+          fileId: doc.fileId,
           price: doc.price,
           rating: doc.rating,
           discount: doc.discountPercentage,

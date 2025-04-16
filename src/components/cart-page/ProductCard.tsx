@@ -9,7 +9,7 @@ import { Trash2 } from "lucide-react"; // Import an icon
 interface CartProduct {
   id: string;
   title: string;
-  srcUrl: string;
+  fileId: string;
   price: number;
   discount: number;
   rating: number;
@@ -50,7 +50,7 @@ const ProductCard = ({ data }: ProductCardProps) => {
     <div className="flex items-center space-x-4">
       <div className="relative w-20 h-20 bg-[#F0EEED] rounded-md">
         <Image
-          src={data.srcUrl}
+          src={data.fileId}
           fill
           alt={data.title}
           className="object-contain p-2"

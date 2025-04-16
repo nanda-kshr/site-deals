@@ -34,23 +34,23 @@ const socialsData: SocialNetworks[] = [
 const paymentBadgesData: PaymentBadge[] = [
   {
     id: 1,
-    srcUrl: "/icons/Visa.svg",
+    fileId: "/icons/Visa.svg",
   },
   {
     id: 2,
-    srcUrl: "/icons/mastercard.svg",
+    fileId: "/icons/mastercard.svg",
   },
   {
     id: 3,
-    srcUrl: "/icons/paypal.svg",
+    fileId: "/icons/paypal.svg",
   },
   {
     id: 4,
-    srcUrl: "/icons/applePay.svg",
+    fileId: "/icons/applePay.svg",
   },
   {
     id: 5,
-    srcUrl: "/icons/googlePay.svg",
+    fileId: "/icons/googlePay.svg",
   },
 ];
 
@@ -126,7 +126,7 @@ const Footer = () => {
                 >
                   <Image
                     priority
-                    src={badge.srcUrl}
+                    src={badge.fileId}
                     width={33}
                     height={100}
                     alt="user"

@@ -113,12 +113,12 @@ export default function ShopPage() {
               return {
                 id: item._id || item.id || `product-${index}`,
                 title: item.name || item.title || "Unnamed Product",
-                srcUrl:
-                  item.srcUrl ||
+                fileId:
+                  item.fileId ||
                   item.image ||
                   item.thumbnail ||
                   "/images/placeholder.jpg",
-                gallery: item.gallery || [item.srcUrl || "/images/placeholder.jpg"],
+                gallery: item.gallery || [item.fileId || "/images/placeholder.jpg"],
                 price: parseFloat(item.price) || 0,
                 discount: parseFloat(item.discountPercentage || item.discount) || 0,
                 rating: parseFloat(item.rating) || 0,

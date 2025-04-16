@@ -46,7 +46,7 @@ export default function ProductPage({params}: {params: Promise<{ id: string }>})
         const mappedProduct: Product = {
           id: data._id,
           title: data.name,
-          srcUrl: data.srcUrl,
+          fileId: data.fileId,
           gallery: data.gallery || [],
           price: data.price,
           discount: data.discountPercentage || 0,
@@ -58,7 +58,7 @@ export default function ProductPage({params}: {params: Promise<{ id: string }>})
         };
         
         setProduct(mappedProduct);
-        setSelectedImage(mappedProduct.srcUrl);
+        setSelectedImage(mappedProduct.fileId);
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
       } finally {
@@ -76,7 +76,7 @@ export default function ProductPage({params}: {params: Promise<{ id: string }>})
       addToCart({
         id: String(product.id),
         title: product.title,
-        srcUrl: product.srcUrl,
+        fileId: product.fileId,
         price: product.price,
         discount: product.discount || 0,
         rating: product.rating,
@@ -227,7 +227,7 @@ function ProductImageGallery({
           transition={{ delay: 0.4, duration: 0.5 }}
           className="flex gap-3 overflow-x-auto pb-2 snap-x"
         >
-          {[product.srcUrl, ...product.gallery].map((img, index) => (
+          {[product.fileId, ...product.gallery].map((img, index) => (
             <motion.button
               key={index}
               onClick={() => setSelectedImage(img)}

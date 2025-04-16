@@ -17,7 +17,7 @@ const AddToCartBtn = ({ data }: { data: Product & { quantity: number } }) => {
           addToCart({
             id: String(data.id || ''),
             title: data.title,
-            srcUrl: data.srcUrl,
+            fileId: data.fileId,
             price: data.price,
             discount: data.discount,
             quantity: data.quantity,

@@ -6,7 +6,7 @@ import mongoose from "mongoose";
 interface ProductResponse {
   _id: string;
   name: string;
-  srcUrl: string;
+  fileId: string;
   price: number;
   rating: number;
 }
@@ -30,13 +30,13 @@ export async function GET(request: Request) {
         { description: { $regex: query, $options: "i" } },
       ],
     })
-      .select("name srcUrl price rating")
+      .select("name fileId price rating")
       .lean<Array<IProduct & { _id: mongoose.Types.ObjectId }>>()
       .then((docs) =>
         docs.map((doc) => ({
           _id: doc._id.toString(),
           name: doc.name,
-          srcUrl: doc.srcUrl,
+          fileId: doc.fileId,
           price: doc.price,
           rating: doc.rating,
         }))

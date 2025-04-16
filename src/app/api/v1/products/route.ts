@@ -6,7 +6,7 @@ import mongoose from "mongoose";
 interface ProductResponse {
   _id: string;
   name: string;
-  srcUrl: string;
+  fileId: string;
   price: number;
   rating: number;
 }
@@ -32,7 +32,7 @@ export async function GET(request: Request) {
 
     await connectDB();
     const products = (await Product.find()
-      .select("name srcUrl price rating discountPercentage")
+      .select("name fileId price rating discountPercentage")
       .skip(skip)
       .limit(limit)
       .lean<Array<IProduct & { _id: mongoose.Types.ObjectId }>>()
@@ -40,7 +40,7 @@ export async function GET(request: Request) {
         docs.map((doc) => ({
           _id: doc._id.toString(),
           name: doc.name,
-          srcUrl: doc.srcUrl,
+          fileId: doc.fileId,
           price: doc.price,
           discount: doc.discountPercentage,
           rating: doc.rating,

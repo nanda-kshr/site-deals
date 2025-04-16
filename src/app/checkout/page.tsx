@@ -45,7 +45,7 @@ export default function CheckoutPage() {
       quantity: number;
       variant?: string;
       size?: string;
-      srcUrl?: string;
+      fileId?: string;
     }>
   >([]);
 
@@ -94,7 +94,7 @@ export default function CheckoutPage() {
           price: item.price,
           discount: item.discount || 0,
           quantity: item.quantity,
-          srcUrl: item.srcUrl,
+          fileId: item.fileId,
         }))
       );
     } else if (itemIds.length > 0 && items.length > 0) {
@@ -410,9 +410,9 @@ export default function CheckoutPage() {
                 {checkoutItems.map((item) => (
                   <div key={item.id} className="flex items-center space-x-4">
                     <div className="relative w-16 h-16 bg-[#F0EEED] rounded-md">
-                      {item.srcUrl && (
+                      {item.fileId && (
                         <Image
-                          src={item.srcUrl}
+                          src={item.fileId}
                           fill
                           alt={item.title}
                           className="object-contain p-2"

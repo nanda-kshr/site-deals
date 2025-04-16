@@ -28,7 +28,7 @@ const ProductListSec = ({
   const fallbackProduct: Product = {
     id: "fallback",
     title: "Coming Soon",
-    srcUrl: "/images/placeholder.jpg",
+    fileId: "/images/placeholder.jpg",
     gallery: ["/images/placeholder.jpg"],
     price: 0,
     discount: 0,

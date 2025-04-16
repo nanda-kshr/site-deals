@@ -3,7 +3,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 interface CartItem {
   id: string;
   title: string;
-  srcUrl: string;
+  fileId: string;
   price: number;
   discount: number; // Percentage, e.g., 5 for 5%
   rating: number;

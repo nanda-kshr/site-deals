@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     
     // Use the interface for proper typing
     const product = await Product.findById(id)
-        .select('name srcUrl price rating discountPercentage description category stock createdAt gallery designTypes')
+        .select('name fileId price rating discountPercentage description category stock createdAt gallery designTypes')
         .lean() as unknown as IProduct;
     
     if (!product) {
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     const productResponse = {
       _id: product._id?.toString() || "",
       name: product.name,
-      srcUrl: product.srcUrl,
+      fileId: product.fileId,
       gallery: product.gallery || [],
       price: product.price,
       rating: product.rating,

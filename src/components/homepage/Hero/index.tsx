@@ -1,16 +1,18 @@
-// @/components/homepage/Hero.tsx
 import AnimatedCounter from "@/components/ui/AnimatedCounter";
 import { cn } from "@/lib/utils";
 import { integralCF } from "@/styles/fonts";
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import * as motion from "framer-motion/client";
 import { Product } from "@/types/product.types";
+import axios from "axios";
+import { ImageOff } from "lucide-react";
 
 type HeroProps = {
   bestFeature?: Product | null;
 };
+
 
 const Hero = ({ bestFeature }: HeroProps) => {
   const today = new Date();
@@ -18,6 +20,89 @@ const Hero = ({ bestFeature }: HeroProps) => {
     month: "long",
     day: "numeric",
   });
+
+  const [featureImageUrl, setFeatureImageUrl] = useState<string | null>(null);
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    // Reset states when bestFeature changes
+    setFeatureImageUrl(null);
+    setImageLoading(true);
+    setImageError(false);
+    
+    const fetchFeatureImage = async () => {
+      // If there's no bestFeature or no fileId, don't attempt to fetch
+      if (!bestFeature?.fileId) {
+        setImageLoading(false);
+        return;
+      }
+      
+      try {
+        // Make POST request to get the image
+        const response = await axios.post('/api/v1/image', {
+          file_id: bestFeature.fileId,
+        }, {
+          responseType: 'blob' // Important: we need the response as a blob
+        });
+        
+        // Create a temporary URL for the blob data
+        const url = URL.createObjectURL(response.data);
+        setFeatureImageUrl(url);
+        setImageLoading(false);
+        
+      } catch (error) {
+        console.error('Failed to load feature image:', error);
+        setImageLoading(false);
+        setImageError(true);
+      }
+    };
+
+    fetchFeatureImage();
+    
+    // Cleanup function to revoke object URLs when component unmounts or bestFeature changes
+    return () => {
+      if (featureImageUrl) {
+        URL.revokeObjectURL(featureImageUrl);
+      }
+    };
+  }, [bestFeature]);
+
+  // Loading animation variants
+  const shimmerVariants = {
+    initial: {
+      backgroundPosition: "-500px 0",
+    },
+    animate: {
+      backgroundPosition: "500px 0",
+      transition: {
+        repeat: Infinity,
+        duration: 1.5,
+        ease: "linear",
+      },
+    },
+  };
+
+  const loadingContainerVariants = {
+    initial: { opacity: 0 },
+    animate: { 
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.2,
+      }
+    },
+  };
+
+  const loadingDotVariants = {
+    initial: { y: 0 },
+    animate: { 
+      y: [0, -10, 0],
+      transition: {
+        repeat: Infinity,
+        duration: 0.8,
+      }
+    },
+  };
 
   return (
     <header className="bg-gradient-to-b from-white to-gray-100 pt-5 md:pt-8 overflow-hidden">
@@ -102,15 +187,82 @@ const Hero = ({ bestFeature }: HeroProps) => {
             >
               {bestFeature ? (
                 <div className="relative w-full h-[180px] md:h-[240px] flex flex-col items-center">
-                  <Link href={`/shop/product/${bestFeature.id}`} >
-                    <Image
-                      priority
-                      src={bestFeature.srcUrl}
-                      fill
-                      alt={bestFeature.title}
-                      className="object-contain rounded-lg"
-                      aria-label={`Featured product: ${bestFeature.title}`}
-                    />
+                  <Link href={`/shop/product/${bestFeature.id}`} className="block w-full h-full relative">
+                    {imageLoading ? (
+                      // Enhanced loading skeleton
+                      <motion.div 
+                        className="absolute inset-0 rounded-lg overflow-hidden"
+                        initial="initial"
+                        animate="animate"
+                      >
+                        {/* Background shimmer effect */}
+                        <motion.div 
+                          className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:800px_100%]"
+                          variants={shimmerVariants}
+                        />
+                        
+                        {/* Loading indicator */}
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                          <div className="w-16 h-16 mb-4 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center">
+                            <motion.div
+                              variants={loadingContainerVariants}
+                              initial="initial"
+                              animate="animate"
+                              className="flex gap-1"
+                            >
+                              {[...Array(3)].map((_, i) => (
+                                <motion.div
+                                  key={i}
+                                  variants={loadingDotVariants}
+                                  className="w-2 h-2 rounded-full bg-blue-500"
+                                />
+                              ))}
+                            </motion.div>
+                          </div>
+                          <span className="text-sm text-gray-600 bg-white/80 px-3 py-1 rounded-full backdrop-blur-sm">
+                            Loading product...
+                          </span>
+                        </div>
+                      </motion.div>
+                    ) : imageError ? (
+                      // Enhanced error state
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100/80 backdrop-blur-sm rounded-lg">
+                        <motion.div 
+                          initial={{ scale: 0.8, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{ duration: 0.3 }}
+                          className="bg-white p-4 rounded-full shadow-md mb-3"
+                        >
+                          <ImageOff size={32} className="text-red-500" />
+                        </motion.div>
+                        <motion.span 
+                          initial={{ y: 10, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          transition={{ delay: 0.2, duration: 0.3 }}
+                          className="text-sm font-medium text-gray-700 bg-white/90 px-3 py-1 rounded-full shadow-sm"
+                        >
+                          Image unavailable
+                        </motion.span>
+                      </div>
+                    ) : (
+                      // Successfully loaded image with fade-in effect
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.5 }}
+                        className="w-full h-full relative"
+                      >
+                        <Image
+                          priority
+                          src={featureImageUrl || ''}
+                          fill
+                          alt={bestFeature.title}
+                          className="object-contain rounded-lg"
+                          aria-label={`Featured product: ${bestFeature.title}`}
+                          onError={() => setImageError(true)}
+                        />
+                      </motion.div>
+                    )}
                   </Link>
                   <motion.div
                     initial={{ opacity: 0, scale: 0.8 }}
