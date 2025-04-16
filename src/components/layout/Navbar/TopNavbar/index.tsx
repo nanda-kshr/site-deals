@@ -2,7 +2,7 @@
 import { cn } from "@/lib/utils";
 import { integralCF } from "@/styles/fonts";
 import Link from "next/link";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { NavMenu } from "../navbar.types";
 import { MenuList } from "./MenuList";
 import {
@@ -12,8 +12,9 @@ import {
 import { MenuItem } from "./MenuItem";
 import Image from "next/image";
 import ResTopNavbar from "./ResTopNavbar";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/lib/hooks/redux";
+import { Search } from "lucide-react";
 
 const data: NavMenu = [
   {
@@ -53,8 +54,32 @@ const CartBtn = () => {
 };
 
 const TopNavbar = () => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  // Get the search query from URL parameters on component mount and when URL changes
+  useEffect(() => {
+    const queryParam = searchParams.get("q");
+    if (queryParam) {
+      setSearchQuery(queryParam);
+    }
+  }, [searchParams]);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/shop?q=${encodeURIComponent(searchQuery.trim())}`);
+      // Close mobile search after submission
+      if (isSearchOpen) {
+        setIsSearchOpen(false);
+      }
+    }
+  };
+
   return (
-    <nav className="sticky top-0 bg-white z-20">
+    <nav className="sticky top-0 bg-white z-20 shadow-sm">
       <div className="flex relative max-w-frame mx-[var(--content-margin)] items-center justify-between py-5 md:py-6 px-4 xl:px-0">
         <div className="flex items-center">
           <div className="block md:hidden mr-4">
@@ -69,22 +94,54 @@ const TopNavbar = () => {
           >
             SiteDeals
           </Link>
-          <NavigationMenu className="hidden md:flex mr-10 lg:mr-20">
+          <NavigationMenu className="hidden md:flex mr-6">
             <NavigationMenuList>
               {data.map((item) => (
                 <React.Fragment key={item.id}>
+                  <Link href={item.url || '#'}>
                   {item.type === "MenuItem" && (
                     <MenuItem label={item.label} url={item.url} />
                   )}
                   {item.type === "MenuList" && (
                     <MenuList data={item.children} label={item.label} />
                   )}
+                  </Link>
                 </React.Fragment>
               ))}
             </NavigationMenuList>
           </NavigationMenu>
         </div>
+
+
+        <div className="hidden md:flex items-center flex-1 max-w-md mx-4">
+          <form onSubmit={handleSearch} className="w-full relative group">
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full py-2 px-4 pl-4 pr-14 border border-black/20 rounded-full text-sm focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition-all"
+            />
+            <button 
+              type="submit" 
+              className="absolute right-0 top-0 bottom-0 flex items-center justify-center px-4 rounded-full bg-black text-white hover:bg-black/80 transition-colors"
+              aria-label="Search"
+            >
+              <Search size={18} />
+            </button>
+          </form>
+        </div>
+
         <div className="flex items-center">
+
+          <button 
+            className="md:hidden p-1 mr-4"
+            onClick={() => setIsSearchOpen(!isSearchOpen)}
+            aria-label="Toggle search"
+          >
+            <Search size={22} />
+          </button>
+          
           <Link href="/#signin" className="p-1 mr-4">
             <Image
               priority
@@ -98,6 +155,29 @@ const TopNavbar = () => {
           <CartBtn />
         </div>
       </div>
+
+
+      {isSearchOpen && (
+        <div className="md:hidden px-4 pb-4 bg-white border-t border-black/10">
+          <form onSubmit={handleSearch} className="w-full relative">
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full py-2 px-4 pl-4 pr-14 border border-black/20 rounded-full text-sm focus:outline-none focus:ring-1 focus:ring-black focus:border-black"
+              autoFocus
+            />
+            <button 
+              type="submit" 
+              className="absolute right-0 top-0 bottom-0 flex items-center justify-center px-4 rounded-full bg-black text-white hover:bg-black/80 transition-colors"
+              aria-label="Search"
+            >
+              <Search size={18} />
+            </button>
+          </form>
+        </div>
+      )}
     </nav>
   );
 };

@@ -1,5 +1,3 @@
-// app/shop/page.tsx
-
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import BreadcrumbShop from "@/components/shop-page/BreadcrumbShop";
@@ -24,8 +22,7 @@ import { cn } from "@/lib/utils";
 import { integralCF } from "@/styles/fonts";
 import { Product } from "@/types/product.types";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Filter, ShoppingBag } from "lucide-react";
 
 export default function ShopPage() {
   const router = useRouter();
@@ -37,9 +34,20 @@ export default function ShopPage() {
   const [sort, setSort] = useState("most-popular");
   const [category, setCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
+  const [showFilters, setShowFilters] = useState(false);
   const page = parseInt(searchParams.get("page") || "1", 10);
   const limit = 9;
   const skip = (page - 1) * limit;
+
+  const query = searchParams.get("q");
+  useEffect(() => {
+    if (query !== null) {
+      setSearchQuery(query);
+    } else if (searchQuery && !searchParams.has("q")) {
+      setSearchQuery("");
+    }
+  }, [query, searchParams, searchQuery]);
+
 
   const handleSearch = useCallback(() => {
     const query = new URLSearchParams({
@@ -168,152 +176,224 @@ export default function ShopPage() {
     { name: "Books & Media", value: "books-media" },
   ];
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } }
+  };
+
   return (
-    <main className="pb-20 bg-gradient-to-b from-white to-gray-50">
-      <div className="max-w-frame mx-[var(--content-margin)] px-4 xl:px-0">
-        <hr className="h-[1px] border-t-black/10 mb-5 sm:mb-6" />
+    <main className="min-h-screen bg-white">
+      <div className="max-w-frame mx-[var(--content-margin)] px-4 xl:px-0 pt-6">
         <BreadcrumbShop />
-
-        <div className="mb-6">
-          <div className="relative max-w-md mx-[var(--content-margin)]">
-            <Input
-              type="text"
-              placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 border-black/20 text-black placeholder-black/60"
-            />
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-black/60" />
-          </div>
-        </div>
-
+        
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="flex flex-wrap gap-3 mb-6"
+          transition={{ duration: 0.4 }}
         >
-          {categories.map((cat) => (
-            <button
-              key={cat.name}
-              onClick={() => handleCategoryChange(cat.value)}
-              className={cn(
-                "px-4 py-2 rounded-full text-sm font-medium transition-colors",
-                category === cat.value || (!category && !cat.value)
-                  ? "bg-amber-500 text-white"
-                  : "bg-gray-100 text-black/60 hover:bg-gray-200"
-              )}
-              aria-label={`Filter by ${cat.name}`}
-            >
-              {cat.name}
-            </button>
-          ))}
+          <hr className="h-[1px] border-t border-black/10 my-5" />
         </motion.div>
 
-        <div className="flex md:space-x-5 items-start">
-          <div className="flex flex-col w-full space-y-5">
-            <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center">
-              <h1
-                className={cn(
-                  integralCF.className,
-                  "font-bold text-2xl md:text-[32px] text-black"
-                )}
+        <motion.h1
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className={cn(
+            integralCF.className,
+            "text-2xl md:text-3xl text-black mb-6 md:mb-8"
+          )}
+        >
+          {searchQuery
+            ? searchQuery
+            : category
+            ? categories.find((c) => c.value === category)?.name.toUpperCase()
+            : "SHOP COLLECTION"}
+        </motion.h1>
+
+        {/* Search and Filter Section */}
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+        >
+          <div className="relative w-full sm:max-w-md">
+          </div>
+          
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <button 
+              onClick={() => setShowFilters(!showFilters)}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium border border-black/20 rounded-md hover:border-black transition-colors"
+            >
+              <Filter size={16} />
+              Filters
+            </button>
+            
+            <div className="relative z-10 w-full sm:w-auto">
+              <Select value={sort} onValueChange={handleSortChange}>
+                <SelectTrigger className="border border-black/20 font-medium text-sm w-full sm:w-[180px] bg-white text-black">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="border-black/20">
+                  <SelectItem value="most-popular">Most Popular</SelectItem>
+                  <SelectItem value="low-price">Price: Low to High</SelectItem>
+                  <SelectItem value="high-price">Price: High to Low</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Categories */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: showFilters ? 1 : 0, y: showFilters ? 0 : -10 }}
+          transition={{ duration: 0.3 }}
+          className={cn(
+            "overflow-hidden transition-all duration-300",
+            showFilters ? "max-h-96 mb-6" : "max-h-0 mb-0"
+          )}
+        >
+          <div className="py-4 border-y border-black/10">
+            <h3 className="text-sm font-semibold text-black mb-3">Categories</h3>
+            <div className="flex flex-wrap gap-2">
+              {categories.map((cat) => (
+                <motion.button
+                  key={cat.name}
+                  whileHover={{ y: -2 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => handleCategoryChange(cat.value)}
+                  className={cn(
+                    "px-4 py-2 rounded-md text-sm font-medium transition-colors",
+                    category === cat.value || (!category && !cat.value)
+                      ? "bg-black text-white"
+                      : "bg-white text-black border border-black/20 hover:border-black"
+                  )}
+                  aria-label={`Filter by ${cat.name}`}
+                >
+                  {cat.name}
+                </motion.button>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Product Count */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4, delay: 0.3 }}
+          className="flex justify-between items-center mb-6"
+        >
+          <span className="text-sm text-black/60">
+            Showing {products.length > 0 ? skip + 1 : 0}–
+            {Math.min(skip + limit, totalProducts)} of {totalProducts} Products
+          </span>
+        </motion.div>
+
+        {/* Products Grid */}
+        {loading ? (
+          <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-6">
+            {[...Array(9)].map((_, i) => (
+              <div
+                key={i}
+                className="rounded-md overflow-hidden border border-black/10"
               >
-                {searchQuery
-                  ? `Search Results for "${searchQuery}"`
-                  : category
-                  ? categories.find((c) => c.value === category)?.name
-                  : "All Products"}
-              </h1>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3 mt-4 lg:mt-0">
-                <span className="text-sm md:text-base text-black/60">
-                  Showing {products.length > 0 ? skip + 1 : 0}–
-                  {Math.min(skip + limit, totalProducts)} of {totalProducts}{" "}
-                  Products
-                </span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-black/60">Sort by:</span>
-                  <Select value={sort} onValueChange={handleSortChange}>
-                    <SelectTrigger className="font-medium text-sm sm:text-base w-fit text-black bg-transparent shadow-none border-none">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="most-popular">
-                        Most Popular
-                      </SelectItem>
-                      <SelectItem value="low-price">
-                        Price: Low to High
-                      </SelectItem>
-                      <SelectItem value="high-price">
-                        Price: High to Low
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="h-[250px] bg-gray-100 animate-pulse" />
+                <div className="p-4 space-y-3">
+                  <div className="h-5 bg-gray-100 animate-pulse rounded w-3/4" />
+                  <div className="h-4 bg-gray-100 animate-pulse rounded w-1/2" />
+                  <div className="h-8 bg-gray-100 animate-pulse rounded" />
                 </div>
               </div>
-            </div>
-
-            {loading ? (
-              <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-4 lg:gap-5">
-                {[...Array(9)].map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-[300px] bg-gray-200 animate-pulse rounded-lg"
-                  />
-                ))}
-              </div>
-            ) : error ? (
-              <div className="text-center py-8">
-                <p className="text-red-600">{error}</p>
-                <button
-                  onClick={() => {
-                    setLoading(true);
-                    setError(null);
-                    setProducts([]);
-                    router.refresh();
-                  }}
-                  className="mt-4 px-4 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
-                >
-                  Retry
-                </button>
-              </div>
-            ) : products.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-black/60">
-                  {searchQuery
-                    ? `No products found for "${searchQuery}".`
-                    : "No products found. Try another category or adjust filters."}
-                </p>
-              </div>
-            ) : (
+            ))}
+          </div>
+        ) : error ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-10 border border-black/10 rounded-md"
+          >
+            <p className="text-red-600 mb-4">{error}</p>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                setLoading(true);
+                setError(null);
+                setProducts([]);
+                router.refresh();
+              }}
+              className="px-6 py-2.5 bg-black text-white rounded-md text-sm font-medium hover:bg-black/80 transition-colors"
+            >
+              Try Again
+            </motion.button>
+          </motion.div>
+        ) : products.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-16 border border-black/10 rounded-md"
+          >
+            <ShoppingBag size={48} className="mx-auto mb-4 text-black/30" />
+            <p className="text-black/60 mb-4">
+              {searchQuery
+                ? `No products found for "${searchQuery}".`
+                : "No products found in this category."}
+            </p>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                setSearchQuery("");
+                handleCategoryChange(null);
+              }}
+              className="px-6 py-2.5 bg-black text-white rounded-md text-sm font-medium hover:bg-black/80 transition-colors"
+            >
+              View All Products
+            </motion.button>
+          </motion.div>
+        ) : (
+          <motion.div
+            id="products"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-5 md:gap-6"
+          >
+            {products.map((product) => (
               <motion.div
-                id="products"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.5 }}
-                className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-4 lg:gap-5"
+                key={typeof product.id === 'string' || typeof product.id === 'number' ? product.id : String(product.id)}
+                variants={itemVariants}
               >
-                {products.map((product) => (
-                  <motion.div
-                    key={typeof product.id === 'string' || typeof product.id === 'number' ? product.id : String(product.id)}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <ProductCard data={product} />
-                  </motion.div>
-                ))}
+                <ProductCard data={product} />
               </motion.div>
-            )}
+            ))}
+          </motion.div>
+        )}
 
-            {!loading && !error && products.length > 0 && !searchQuery && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4, duration: 0.5 }}
-                className="mt-8"
-              >
-                <Pagination className="justify-between">
+        {/* Pagination */}
+        {!loading && !error && products.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.4 }}
+            className="mt-10 mb-16"
+          >
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
                   <PaginationPrevious
                     href={
                       page > 1
@@ -323,43 +403,53 @@ export default function ShopPage() {
                         : "#"
                     }
                     className={cn(
-                      "border border-black/10",
-                      page === 1 && "opacity-50 cursor-not-allowed"
+                      "border border-black/20 hover:border-black transition-colors",
+                      page === 1 && "opacity-50 cursor-not-allowed pointer-events-none"
                     )}
                   />
-                  <PaginationContent>
-                    {Array.from(
-                      { length: Math.min(totalPages, 5) },
-                      (_, i) => i + 1
-                    ).map((p) => (
-                      <PaginationItem key={p}>
-                        <PaginationLink
-                          href={`/shop?page=${p}${
-                            category ? `&category=${category}` : ""
-                          }${searchQuery ? `&q=${searchQuery}` : ""}`}
-                          className={cn(
-                            "text-black/50 font-medium text-sm",
-                            page === p && "text-black bg-amber-100"
-                          )}
-                          isActive={page === p}
-                        >
-                          {p}
-                        </PaginationLink>
-                      </PaginationItem>
-                    ))}
-                    {totalPages > 5 && (
-                      <PaginationItem>
-                        <PaginationLink
-                          href={`/shop?page=${totalPages}${
-                            category ? `&category=${category}` : ""
-                          }${searchQuery ? `&q=${searchQuery}` : ""}`}
-                          className="text-black/50 font-medium text-sm"
-                        >
-                          {totalPages}
-                        </PaginationLink>
-                      </PaginationItem>
-                    )}
-                  </PaginationContent>
+                </PaginationItem>
+                
+                {Array.from(
+                  { length: Math.min(totalPages, 5) },
+                  (_, i) => i + 1
+                ).map((p) => (
+                  <PaginationItem key={p}>
+                    <PaginationLink
+                      href={`/shop?page=${p}${
+                        category ? `&category=${category}` : ""
+                      }${searchQuery ? `&q=${searchQuery}` : ""}`}
+                      className={cn(
+                        "border font-medium",
+                        page === p 
+                          ? "border-black bg-black text-white" 
+                          : "border-black/20 text-black hover:border-black"
+                      )}
+                      isActive={page === p}
+                    >
+                      {p}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+                
+                {totalPages > 5 && (
+                  <>
+                    <PaginationItem>
+                      <span className="px-2">...</span>
+                    </PaginationItem>
+                    <PaginationItem>
+                      <PaginationLink
+                        href={`/shop?page=${totalPages}${
+                          category ? `&category=${category}` : ""
+                        }${searchQuery ? `&q=${searchQuery}` : ""}`}
+                        className="border border-black/20 text-black hover:border-black"
+                      >
+                        {totalPages}
+                      </PaginationLink>
+                    </PaginationItem>
+                  </>
+                )}
+                
+                <PaginationItem>
                   <PaginationNext
                     href={
                       page < totalPages
@@ -369,15 +459,15 @@ export default function ShopPage() {
                         : "#"
                     }
                     className={cn(
-                      "border border-black/10",
-                      page === totalPages && "opacity-50 cursor-not-allowed"
+                      "border border-black/20 hover:border-black transition-colors",
+                      page === totalPages && "opacity-50 cursor-not-allowed pointer-events-none"
                     )}
                   />
-                </Pagination>
-              </motion.div>
-            )}
-          </div>
-        </div>
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </motion.div>
+        )}
       </div>
     </main>
   );

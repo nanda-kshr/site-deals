@@ -1,30 +1,26 @@
-// app/components/common/ProductCard.tsx
-
-"use client";
-import { Product } from "@/types/product.types";
-import Image from "next/image";
+import React from "react";
 import Link from "next/link";
+import Image from "next/image";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { integralCF } from "@/styles/fonts";
-import Rating from "@/components/ui/Rating";
-import { Heart } from "lucide-react";
+import { Product } from "@/types/product.types";
+import { Heart, ShoppingBag } from "lucide-react";
 import { useAppDispatch } from "@/lib/hooks/redux";
 import { addToCart } from "@/lib/features/carts/cartsSlice";
 
-interface ProductCardProps {
+type ProductCardProps = {
   data: Product;
-}
+  className?: string;
+};
 
-const ProductCard = ({ data }: ProductCardProps) => {
+export default function ProductCard({ data, className }: ProductCardProps) {
+  const [isHovered, setIsHovered] = React.useState(false);
   const dispatch = useAppDispatch();
-  const discountPercentage = data.discount || 0;
-  const discountedPrice =
-    discountPercentage > 0
-      ? data.price * (1 - discountPercentage / 100)
-      : data.price;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
+    
     dispatch(
       addToCart({
         id: String(data.id),
@@ -38,103 +34,98 @@ const ProductCard = ({ data }: ProductCardProps) => {
     );
   };
 
+  const discountedPrice = data.discount
+    ? data.price * (1 - data.discount / 100)
+    : data.price;
+
   return (
-    <Link href={`/shop/product/${data.id}`} className="block group" >
-      <div className="bg-white border border-black/10 rounded-lg overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 relative">
-        {data.rating >= 4.0 && (
-          <span className="absolute top-2 left-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full z-10 shadow-sm">
-            Top Rated
-          </span>
-        )}
-        {discountPercentage > 0 && (
-          <span className="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded-full z-10 shadow-sm animate-pulse">
-            -{discountPercentage}% off
-          </span>
-        )}
-        {(typeof data.stock === 'number' && data.stock < 5) && (
-          <span className="absolute bottom-2 left-2 text-red-600 text-xs font-medium z-10">
-            {data.stock ? `Only ${data.stock} left!` : "Low Stock"}
-          </span>
-        )}
-        <div className="relative w-full h-[200px] bg-[#F0EEED]">
+    <motion.div
+      className={cn(
+        "group relative bg-white rounded-md overflow-hidden h-full flex flex-col border border-black/10 hover:border-black/30 transition-all duration-300",
+        className
+      )}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      whileHover={{ y: -4 }}
+    >
+      <Link href={`/product/${data.id}`} className="block h-full">
+        <div className="relative pt-[100%] overflow-hidden bg-[#FAFAFA]">
           <Image
             src={data.srcUrl}
-            fill
             alt={data.title}
-            className="object-contain p-4 group-hover:scale-105 transition-transform duration-300"
+            fill
+            className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
-        </div>
-        <div className="p-4 space-y-3">
-          <h3
+          
+          {data.discount > 0 && (
+            <div className="absolute top-3 left-3 bg-black text-white text-xs font-medium py-1 px-2 rounded">
+              -{data.discount}%
+            </div>
+          )}
+          
+          {/* Quick action buttons */}
+          <div 
             className={cn(
-              integralCF.className,
-              "text-lg font-bold text-black truncate"
+              "absolute bottom-0 left-0 right-0 flex justify-center p-3 bg-white/80 backdrop-blur-sm transition-all duration-300",
+              isHovered ? "opacity-100 translate-y-0" : "opacity-0 translate-y-full"
             )}
           >
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleAddToCart}
+              className="bg-black text-white rounded-md px-4 py-2 text-sm font-medium flex items-center gap-2 hover:bg-black/80 transition-colors"
+            >
+              <ShoppingBag size={16} />
+              Add to Cart
+            </motion.button>
+          </div>
+        </div>
+
+        <div className="p-4 flex flex-col flex-grow">
+          <h3 className="font-medium text-black text-base mb-1 line-clamp-2 group-hover:underline decoration-1 underline-offset-2">
             {data.title}
           </h3>
-          <div className="flex items-center gap-2">
-            <Rating
-              initialValue={data.rating}
-              allowFraction
-              SVGclassName="inline-block"
-              emptyClassName="fill-gray-50"
-              size={16}
-              readonly
-            />
-            <span className="text-xs text-black/60">
-              {data.rating.toFixed(1)}
-            </span>
+          
+          <div className="flex items-center gap-2 mb-2">
+            <div className="flex gap-0.5">
+              {[...Array(5)].map((_, i) => (
+                <span key={i} className={cn("text-xs", i < Math.floor(data.rating) ? "text-black" : "text-black/30")}>
+                  ★
+                </span>
+              ))}
+            </div>
+            <span className="text-xs text-black/60">({data.rating.toFixed(1)})</span>
           </div>
-          <div className="flex items-center gap-2">
-            {discountPercentage > 0 ? (
-              <>
-                <span className="font-bold text-xl text-black">
-                  ${discountedPrice.toFixed(2)}
-                </span>
-                <span className="text-sm text-black/40 line-through">
-                  ${data.price.toFixed(2)}
-                </span>
-              </>
-            ) : (
-              <span className="font-bold text-xl text-black">
+          
+          <div className="flex items-center gap-2 mt-auto">
+            <span className="font-semibold text-black">
+              ${discountedPrice.toFixed(2)}
+            </span>
+            {data.discount > 0 && (
+              <span className="text-black/50 text-sm line-through">
                 ${data.price.toFixed(2)}
               </span>
             )}
           </div>
-          {data.soldCount && (
-            <p className="text-xs text-black/60">{String(data.soldCount)} sold</p>
-          )}
-          <div className="flex gap-2">
-            <button
-              className="flex-1 bg-black text-white py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
-              onClick={handleAddToCart}
-            >
-              Add to Cart
-            </button>
-            <button
-              className="px-4 py-2 border border-black text-black rounded-lg text-sm font-medium hover:bg-black hover:text-white transition-colors"
-              onClick={(e) => {
-                e.preventDefault();
-                console.log(`View details for ${data.title}`);
-              }}
-            >
-              View
-            </button>
-            <button
-              className="p-2 border border-black rounded-lg hover:bg-black hover:text-white transition-colors"
-              onClick={(e) => {
-                e.preventDefault();
-                console.log(`Add ${data.title} to wishlist`);
-              }}
-            >
-              <Heart className="w-4 h-4" />
-            </button>
-          </div>
         </div>
-      </div>
-    </Link>
-  );
-};
+      </Link>
 
-export default ProductCard;
+      {/* Wishlist button */}
+      <button 
+        className={cn(
+          "absolute top-3 right-3 bg-white rounded-full w-8 h-8 flex items-center justify-center shadow-sm border border-black/10 transition-all duration-300",
+          isHovered ? "opacity-100" : "opacity-0"
+        )}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          // Add wishlist functionality here
+        }}
+      >
+        <Heart size={16} className="text-black hover:fill-current" />
+      </button>
+    </motion.div>
+  );
+}
