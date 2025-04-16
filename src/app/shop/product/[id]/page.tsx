@@ -24,7 +24,13 @@ export default function ProductPage({params}: {params: Promise<{ id: string }>})
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const response = await fetch(`/api/v1/products/${id}`);
+        const response = await fetch(`/api/v1/product`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ id }),
+        });
         
         if (!response.ok) {
           if (response.status === 404) {

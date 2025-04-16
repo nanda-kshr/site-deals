@@ -67,7 +67,7 @@ const TopNavbar = () => {
               "text-2xl lg:text-[32px] mb-2 mr-3 lg:mr-10",
             ])}
           >
-            SiteDeals.store
+            SiteDeals
           </Link>
           <NavigationMenu className="hidden md:flex mr-10 lg:mr-20">
             <NavigationMenuList>
