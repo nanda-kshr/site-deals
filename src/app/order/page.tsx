@@ -36,7 +36,7 @@ export default function OrderPage() {
         body: JSON.stringify({ orderId }),
       });
 
-      if (!response.ok) {
+      if (!response.ok) { 
         throw new Error("Failed to fetch order details. Please try again.");
       }
 
