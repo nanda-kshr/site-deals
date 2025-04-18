@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion } from "framer-motion"; // Changed to named import
 import { cn } from "@/lib/utils";
 import { Product } from "@/types/product.types";
 import { Heart, ShoppingBag, ImageOff } from "lucide-react";
@@ -13,8 +13,6 @@ type ProductCardProps = {
   data: Product;
   className?: string;
 };
-
-
 
 export default function ProductCard({ data, className }: ProductCardProps) {
   const [isHovered, setIsHovered] = React.useState(false);
@@ -38,11 +36,11 @@ export default function ProductCard({ data, className }: ProductCardProps) {
           responseType: 'blob' // Important: we need the response as a blob
         });
         
-        // Create a temporary URL for the blob data
+        console.log(response);
+        console.log("afnjanf----f-wefwe-fw-ef-")
         const url = URL.createObjectURL(response.data);
         setImageUrl(url);
         setImageLoading(false);
-        
       } catch (error) {
         console.error(`Failed to load image for product ${data.id}:`, error);
         setImageLoading(false);
@@ -94,22 +92,21 @@ export default function ProductCard({ data, className }: ProductCardProps) {
     e.preventDefault();
     e.stopPropagation();
     
+    // Prioritize global price, fallback to first attribute price
+    const price = data.price || data.attributes?.size[0]?.price || data.attributes?.color[0]?.price || 0;
     dispatch(
       addToCart({
         id: String(data.id),
         title: data.title,
         fileId: data.fileId,
-        price: data.price,
-        discount: data.discount || 0,
-        rating: data.rating,
+        price: price,
         quantity: 1,
       })
     );
   };
 
-  const discountedPrice = data.discount
-    ? data.price * (1 - data.discount / 100)
-    : data.price;
+  // Use global price with attribute fallback
+  const price = data.price || data.attributes?.size[0]?.price || data.attributes?.color[0]?.price || 0;
 
   return (
     <motion.div
@@ -124,7 +121,7 @@ export default function ProductCard({ data, className }: ProductCardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Link href={`/product/${data.id}`} className="block h-full">
+      <Link href={`/shop/product/${data.id}`} className="block h-full">
         <div className="relative pt-[100%] overflow-hidden bg-[#FAFAFA]">
           {imageLoading ? (
             // Enhanced loading skeleton
@@ -252,21 +249,21 @@ export default function ProductCard({ data, className }: ProductCardProps) {
               <div className="flex items-center gap-2 mb-2">
                 <div className="flex gap-0.5">
                   {[...Array(5)].map((_, i) => (
-                    <span key={i} className={cn("text-xs", i < Math.floor(data.rating) ? "text-black" : "text-black/30")}>
+                    <span key={i} className={cn("text-xs", i < Math.floor(data.rating || 0) ? "text-black" : "text-black/30")}>
                       ★
                     </span>
                   ))}
                 </div>
-                <span className="text-xs text-black/60">({data.rating.toFixed(1)})</span>
+                <span className="text-xs text-black/60">({(data.rating || 0).toFixed(1)})</span>
               </div>
               
               <div className="flex items-center gap-2 mt-auto">
                 <span className="font-semibold text-black">
-                  ${discountedPrice.toFixed(2)}
+                  ${price.toFixed(2)}
                 </span>
                 {data.discount > 0 && (
                   <span className="text-black/50 text-sm line-through">
-                    ${data.price.toFixed(2)}
+                    ${(data.price || 0).toFixed(2)}
                   </span>
                 )}
               </div>

@@ -7,8 +7,14 @@ interface ProductResponse {
   _id: string;
   name: string;
   fileId: string;
-  price: number;
-  rating: number;
+  gallery: string[];
+  description: string;
+  createdAt: string;
+  attributes?: {
+    size: { value: string; price: number; fileId: string }[];
+    color: { value: string; price: number; fileId: string }[];
+  };
+  rating?: number;
 }
 
 export async function GET(request: Request) {
@@ -32,26 +38,33 @@ export async function GET(request: Request) {
 
     await connectDB();
     const products = (await Product.find()
-      .select("name fileId price rating discountPercentage")
       .skip(skip)
       .limit(limit)
       .lean<Array<IProduct & { _id: mongoose.Types.ObjectId }>>()
       .then((docs) =>
-        docs.map((doc) => ({
-          _id: doc._id.toString(),
-          name: doc.name,
-          fileId: doc.fileId,
-          price: doc.price,
-          discount: doc.discountPercentage,
-          rating: doc.rating,
-        }))
+        docs.map((doc) => {
+          console.log("doc.createdAt:", doc.createdAt, typeof doc.createdAt); // Enhanced debug log
+          const createdAt = typeof doc.createdAt === "string" && doc.createdAt
+            ? doc.createdAt
+            : new Date().toISOString();
+          return {
+            _id: doc._id.toString(),
+            name: doc.name,
+            fileId: doc.fileId,
+            gallery: doc.gallery || [],
+            description: doc.description || "",
+            createdAt: createdAt,
+            attributes: doc.attributes || { size: [], color: [] },
+            rating: doc.rating || 0,
+          };
+        })
       )) as ProductResponse[];
 
     return NextResponse.json(products, { status: 200 });
   } catch (error) {
     console.error("Error fetching products:", error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: "Internal Server Error", details: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
     );
   }
