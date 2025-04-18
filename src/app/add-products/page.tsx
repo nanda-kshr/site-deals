@@ -12,8 +12,7 @@ import {
   Star, 
   StarOff,
   Loader2,
-  Save,
-  Plus
+  Save
 } from "lucide-react";
 
 interface ImageFile extends File {
@@ -43,7 +42,6 @@ export default function AddProductsPage() {
   const [category, setCategory] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
-  const [designTypes, setDesignTypes] = useState<string[]>([]);
   const [price, setPrice] = useState<string>(""); // New state for global price
   
   // Attribute arrays with prices and photos
@@ -287,7 +285,9 @@ export default function AddProductsPage() {
               return response.data.fileId;
             })
           );
-          results.push({ value: item.value, fileId: photoUploads[0] || "", price: item.price });
+          // Convert price to number or undefined to match the expected type
+          const priceValue = typeof item.price === 'number' ? item.price : undefined;
+          results.push({ value: item.value, fileId: photoUploads[0] || "", price: priceValue });
         }
         return results;
       };
@@ -331,7 +331,6 @@ export default function AddProductsPage() {
         setAttributes({ size: [], color: [] });
         setAttributeInput({ key: "size", value: "", price: "" });
         setFiles([]);
-        setDesignTypes([]);
         setMainImageIndex(null);
         setAdminPassword("");
         setPrice(""); // Reset price
@@ -353,7 +352,7 @@ export default function AddProductsPage() {
     return () => {
       files.forEach(file => URL.revokeObjectURL(file.preview || ""));
       Object.values(attributes).forEach(items => 
-        items.forEach(item => item.photos.forEach(photo => URL.revokeObjectURL(photo.preview || "")))
+        items.forEach((item: { photos: ImageFile[]; }) => item.photos.forEach((photo: ImageFile) => URL.revokeObjectURL(photo.preview || "")))
       );
     };
   }, [files, attributes]);
@@ -527,7 +526,7 @@ export default function AddProductsPage() {
                     <div key={key} className="space-y-2">
                       <h3 className="text-sm font-medium text-gray-700 capitalize">{key}</h3>
                       <div className="space-y-4">
-                        {items.map((item, index) => (
+                        {items.map((item: AttributeItem, index: number) => (
                           <div key={index} className="flex items-center gap-4 p-2 border border-gray-200 rounded-md">
                             <span className="text-sm font-medium">{item.value}</span>
                             <input
@@ -539,7 +538,7 @@ export default function AddProductsPage() {
                                 const newPrice = e.target.value ? parseFloat(e.target.value) : undefined;
                                 setAttributes(prev => ({
                                   ...prev,
-                                  [key]: prev[key].map((i, iIndex) =>
+                                  [key as keyof AttributeArrays]: prev[key as keyof AttributeArrays].map((i, iIndex) =>
                                     iIndex === index ? { ...i, price: newPrice } : i
                                   )
                                 }));
@@ -563,7 +562,7 @@ export default function AddProductsPage() {
                             </button>
                             {item.photos.length > 0 && (
                               <div className="grid grid-cols-2 gap-2">
-                                {item.photos.map(photo => (
+                                {item.photos.map((photo: ImageFile) => (
                                   <div key={photo.id} className="relative h-16 w-16">
                                     <Image
                                       src={photo.preview || ""}
@@ -573,7 +572,7 @@ export default function AddProductsPage() {
                                     />
                                     <button
                                       type="button"
-                                      onClick={() => removeFile(photo.id || "", true)}
+                                      onClick={() => removeFile(String(photo.id || ""), true)}
                                       className="absolute top-0 right-0 bg-white rounded-full p-0.5 hover:bg-gray-200"
                                     >
                                       <X className="h-4 w-4 text-red-500" />
