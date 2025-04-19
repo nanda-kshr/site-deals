@@ -108,7 +108,6 @@ export async function POST(request: Request) {
     }
 
     await order.save();
-    console.log(`Order ${data.order.order_id} updated to status: ${order.status}`);
 
     // Return success response
     return NextResponse.json(

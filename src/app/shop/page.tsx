@@ -111,7 +111,7 @@ export default function ShopPage() {
           .map((item: Product, index: number) => {
             try {
               return {
-                id: item._id,
+                _id: item._id,
                 title: item.name,
                 fileId:
                   item.fileId,
@@ -140,6 +140,7 @@ export default function ShopPage() {
           return b.rating - a.rating;
         });
         setProducts(sortedProducts);
+
       } catch (err: Error | unknown) {
         console.error("Fetch error:", err);
         setError("Failed to load products. Please try again.");

@@ -70,7 +70,7 @@ export default function OrderPage() {
 
       const data = await response.json();
       setOrderDetails(data);
-      console.log("Order details:", data);
+
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Something went wrong. Please try again.";
       setError(errorMessage); 

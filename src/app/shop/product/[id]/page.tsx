@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion"; 
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { integralCF } from "@/styles/fonts";
 import Rating from "@/components/ui/Rating";
@@ -11,7 +11,7 @@ import { Product } from "@/types/product.types";
 import { notFound } from "next/navigation";
 import { useAppDispatch } from "@/lib/hooks/redux";
 import { addToCart } from "@/lib/features/carts/cartsSlice";
-import { ArrowLeft, Heart, ImageOff, Share2, ShoppingBag, Truck } from "lucide-react";
+import { ArrowLeft, Heart, ImageOff, Share2, ShoppingBag } from "lucide-react";
 import axios from "axios";
 import { getimage, getproduct } from "@/lib/constants";
 
@@ -45,67 +45,13 @@ function ProductImageGallery({
   product,
   selectedImageUrl,
   setSelectedImageUrl,
-  setImageUrls,
   imageUrls,
 }: {
   product: Product;
   selectedImageUrl: string | null;
   setSelectedImageUrl: (url: string | null) => void;
-  setImageUrls: React.Dispatch<
-    React.SetStateAction<{
-      fileId: string;
-      url: string | null;
-      attribute?: { key: string; value: string };
-    }[]>
-  >;
   imageUrls: { fileId: string; url: string | null; attribute?: { key: string; value: string } }[];
 }) {
-  useEffect(() => {
-    const fetchAdditionalImages = async () => {
-      const allFileIds = [
-        product.fileId,
-        ...product.gallery,
-        ...(product.attributes?.size?.map((item) => item.fileId) || []),
-        ...(product.attributes?.color?.map((item) => item.fileId) || []),
-      ].filter(Boolean) as string[];
-      const newImagePromises = allFileIds
-        .filter((fileId) => !imageUrls.some((img) => img.fileId === fileId))
-        .map(async (fileId) => {
-          try {
-            const imageResponse = await axios.post(
-              getimage,
-              { file_id: fileId },
-              { responseType: "blob" }
-            );
-            let attribute = undefined;
-            if (product.attributes) {
-              for (const [key, items] of Object.entries(product.attributes)) {
-                const item = items.find((i) => i.fileId === fileId);
-                if (item) {
-                  attribute = { key, value: item.value };
-                  break;
-                }
-              }
-            }
-            return { fileId, url: URL.createObjectURL(imageResponse.data), attribute };
-          } catch (error) {
-            console.error(`Failed to load gallery image ${fileId}:`, error);
-            return { fileId, url: null, attribute: undefined };
-          }
-        });
-      const newUrls = await Promise.all(newImagePromises);
-      setImageUrls((prev) => [...prev, ...newUrls]);
-    };
-
-    if (
-      product.gallery.length > 0 ||
-      (product.attributes?.size.length || 0) > 0 ||
-      (product.attributes?.color.length || 0) > 0
-    ) {
-      fetchAdditionalImages();
-    }
-  }, [product.gallery, product.attributes, imageUrls, product.fileId, setImageUrls]);
-
   return (
     <div className="space-y-4">
       <motion.div
@@ -118,16 +64,16 @@ function ProductImageGallery({
           <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
             <ShoppingBag size={24} className="text-gray-400 animate-pulse" />
           </div>
-        ) : 
+        ) : (
           <Image
             src={selectedImageUrl}
             alt={`${product.name} main product image`}
             fill
             className="object-contain p-6"
             priority
-            sizes="(max-size: 768px) 100vw, 50vw"
+            sizes="(max-width: 768px) 100vw, 50vw"
           />
-        }
+        )}
         <div className="absolute top-4 right-4 flex flex-col gap-2">
           <motion.button
             whileHover={{ scale: 1.1 }}
@@ -180,7 +126,6 @@ function ProductImageGallery({
   );
 }
 
-// Define ProductDetails locally
 function ProductDetails({
   product,
   handleAddToCart,
@@ -210,7 +155,7 @@ function ProductDetails({
     if (!product.attributes && !product.price) return 0;
     const sizePrice = product.attributes?.size.find((s) => s.value === selectedSize)?.price || 0;
     const colorPrice = product.attributes?.color.find((c) => c.value === selectedColor)?.price || 0;
-    return product.price || Math.max(sizePrice, colorPrice); // Use global price if available, otherwise attribute price
+    return product.price || Math.max(sizePrice, colorPrice);
   };
 
   return (
@@ -248,7 +193,6 @@ function ProductDetails({
       <p className="text-black/80 text-sm md:text-base mb-6 leading-relaxed">
         {product.description}
       </p>
-
 
       {/* Size Selection */}
       {product.attributes && product.attributes.size.length > 0 && (
@@ -320,22 +264,11 @@ function ProductDetails({
         </div>
       </div>
 
-      {/* Shipping & Returns */}
-      <div className="mb-6 bg-[#F9F9F9] p-4 rounded-lg">
-        <div className="flex items-start gap-3 mb-2">
-          <Truck size={18} className="text-black mt-0.5" />
-          <div>
-            <p className="text-sm font-medium text-black">Free Shipping</p>
-            <p className="text-xs text-black/70">Orders over $50 qualify for free shipping</p>
-          </div>
-        </div>
-        <div className="w-full h-px bg-gray-200 my-2"></div>
-        <p className="text-xs text-black/70">30-day easy returns</p>
-      </div>
+      
 
       {/* Action Buttons */}
       <div className="flex gap-3 mb-6">
-      <motion.button
+        <motion.button
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5, duration: 0.5 }}
@@ -343,14 +276,12 @@ function ProductDetails({
           whileTap={{ scale: 0.98 }}
           className={cn(
             "bg-black text-white px-6 py-3.5 rounded-lg flex-1 flex items-center justify-center gap-2 font-medium shadow-lg hover:shadow-xl transition-all duration-300",
-            ((product.attributes?.size.length || 0 )> 0 && !selectedSize) ||
-              ((product.attributes?.color.length|| 0 )> 0 && !selectedColor)
+            ((product.attributes?.size.length || 0) > 0 && !selectedSize) ||
+              ((product.attributes?.color.length || 0) > 0 && !selectedColor)
               ? "opacity-50 cursor-not-allowed"
               : ""
           )}
-          onClick={()=>{
-            console.log("Add to Cart Clicked");
-            handleAddToCart()}}
+          onClick={handleAddToCart}
           disabled={
             ((product.attributes?.size.length || 0) > 0 && !selectedSize) ||
             ((product.attributes?.color.length || 0) > 0 && !selectedColor)
@@ -404,11 +335,11 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const [error, setError] = useState<string | null>(null);
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [imageUrls, setImageUrls] = useState<{ fileId: string; url: string | null; attribute?: { key: string; value: string } }[]>([]);
-  const [imageLoading, setImageLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -442,12 +373,14 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         };
 
         setProduct(mappedProduct);
+
         const allFileIds = [
           mappedProduct.fileId,
           ...mappedProduct.gallery,
           ...(mappedProduct.attributes?.size?.map((item) => item.fileId) || []),
           ...(mappedProduct.attributes?.color?.map((item) => item.fileId) || []),
         ].filter(Boolean) as string[];
+
         const imagePromises = allFileIds.map(async (fileId) => {
           try {
             const imageResponse = await axios.post(
@@ -455,12 +388,23 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               { file_id: fileId },
               { responseType: "blob" }
             );
-            return { fileId, url: URL.createObjectURL(imageResponse.data) };
+            let attribute = undefined;
+            if (mappedProduct.attributes) {
+              for (const [key, items] of Object.entries(mappedProduct.attributes)) {
+                const item = items.find((i) => i.fileId === fileId);
+                if (item) {
+                  attribute = { key, value: item.value };
+                  break;
+                }
+              }
+            }
+            return { fileId, url: URL.createObjectURL(imageResponse.data), attribute };
           } catch (error) {
             console.error(`Failed to load image ${fileId}:`, error);
-            return { fileId, url: null };
+            return { fileId, url: null, attribute: undefined };
           }
         });
+
         const urls = await Promise.all(imagePromises);
         setImageUrls(urls);
         const firstValidUrl = urls.find((img) => img.url)?.url;
@@ -469,7 +413,6 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         setError(err instanceof Error ? err.message : "An unknown error occurred");
       } finally {
         setLoading(false);
-        setImageLoading(false);
       }
     };
 
@@ -486,7 +429,8 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
   const handleAddToCart = () => {
     if (!product) return;
-    const price = product.price || 
+    const price =
+      product.price ||
       (product.attributes?.size.find((s) => s.value === selectedSize)?.price ||
         product.attributes?.color.find((c) => c.value === selectedColor)?.price ||
         0);
@@ -505,12 +449,11 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     );
   };
 
-  console.log(quantity)
   const incrementQuantity = () => setQuantity((prev) => prev + 1);
   const decrementQuantity = () => setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
   const toggleFavorite = () => setIsFavorite(!isFavorite);
 
-  if (loading || imageLoading) {
+  if (loading) {
     return <ProductSkeleton />;
   }
 
@@ -527,7 +470,6 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Breadcrumb Navigation */}
       <div className="max-w-frame mx-auto px-4 md:px-6 pt-4 md:pt-6">
         <Link
           href="/shop"
@@ -545,16 +487,12 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           transition={{ duration: 0.6 }}
           className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 lg:gap-16"
         >
-          {/* Image Section */}
           <ProductImageGallery
             product={product}
             selectedImageUrl={selectedImageUrl}
             setSelectedImageUrl={setSelectedImageUrl}
-            setImageUrls={setImageUrls}
             imageUrls={imageUrls}
           />
-
-          {/* Details Section */}
           <ProductDetails
             product={product}
             handleAddToCart={handleAddToCart}

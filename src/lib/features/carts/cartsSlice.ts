@@ -66,7 +66,6 @@ const cartsSlice = createSlice({
           state.items = state.items.filter((i) => i.id !== action.payload.id);
         }
       }
-      console.log("quantity 2 - ",item)
       state.totalPrice = state.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
       state.adjustedTotalPrice = state.items.reduce(
         (sum, i) => sum + i.price * (1 - (i.discount || 0) / 100) * i.quantity,

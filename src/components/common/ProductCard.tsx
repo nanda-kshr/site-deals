@@ -87,7 +87,7 @@ export default function ProductCard({ data, className }: ProductCardProps) {
     e.preventDefault();
     e.stopPropagation();
     const price = data.price || data.attributes?.size[0]?.price || data.attributes?.color[0]?.price || 0;
-    console.log(data._id)
+
     dispatch(
       addToCart({
         id: String(data._id),

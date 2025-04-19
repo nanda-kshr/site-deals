@@ -24,7 +24,6 @@ export async function POST(request: Request) {
     const body: OrderRequest = await request.json();
     const { name, email, phone, address, items } = body;
 
-    console.log('Received order request:', JSON.stringify(body, null, 2));
 
     // Basic validation
     if (!name || !email || !phone || !address) {
@@ -69,9 +68,6 @@ export async function POST(request: Request) {
     // Round to 2 decimal places
     totalAmount = Number(totalAmount.toFixed(2));
 
-    console.log('Creating order with items:', JSON.stringify(orderItems, null, 2));
-    console.log('Total amount:', totalAmount);
-
     // Create the order
     const order = new Order({
       name,
@@ -87,7 +83,6 @@ export async function POST(request: Request) {
     const savedOrder = await order.save();
     const orderId = savedOrder._id.toString();
 
-    console.log('Order created successfully:', orderId);
 
     // Create payment session with Cashfree
     const cashfreeOptions = {
@@ -129,7 +124,6 @@ export async function POST(request: Request) {
 
     const paymentSessionId = cashfreeData.payment_session_id;
 
-    console.log('Payment session created:', paymentSessionId);
 
     return NextResponse.json({ 
       orderId, 

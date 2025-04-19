@@ -25,7 +25,6 @@ export default function CheckoutPage() {
   const searchParams = useSearchParams();
   const cartState = useAppSelector((state: RootState) => state.carts);
   const items = cartState?.items || [];
-  console.log("Items in cart:", items);
   const [step, setStep] = useState<"contact" | "email" | "otp">("contact");
   const [name, setName] = useState("");
   const [countryCode, setCountryCode] = useState("+91");
@@ -54,11 +53,7 @@ export default function CheckoutPage() {
     }>
   >([]);
 
-  // Debug state values
-  useEffect(() => {
-    console.log("Current payment session ID:", paymentSessionId);
-    console.log("Current order ID:", orderId);
-  }, [paymentSessionId, orderId]);
+
 
   // Initialize Cashfree payment
   const initiatePayment = async (sessionId: string) => {
@@ -69,7 +64,6 @@ export default function CheckoutPage() {
     }
 
     try {
-      console.log("Initiating payment with session ID:", sessionId);
       const cashfree = await load({
         mode: "sandbox",
       });
@@ -181,13 +175,11 @@ export default function CheckoutPage() {
       }
       
       const data = await response.json();
-      console.log("Order created:", data);
-      
+
       if (data.orderId && data.paymentSessionId) {
         setOrderId(data.orderId);
         setPaymentSessionId(data.paymentSessionId);
-        console.log("Set payment session ID:", data.paymentSessionId);
-        
+
         // If email is already provided, skip to OTP step
         if (email) {
           await handleSendOtp(data.orderId, email);
@@ -220,7 +212,7 @@ export default function CheckoutPage() {
     setIsLoading(true);
     
     try {
-      console.log("Sending OTP for order:", orderIdToUse, "to email:", emailToUse);
+
       const response = await fetch("/api/v1/mail/send-confirmation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -268,7 +260,7 @@ export default function CheckoutPage() {
     setIsLoading(true);
     
     try {
-      console.log("Verifying OTP for order:", orderId, "email:", email, "otp:", otp);
+
       const response = await fetch("/api/v1/mail/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -284,7 +276,7 @@ export default function CheckoutPage() {
       }
       
       // Check if we have a payment session ID
-      console.log("OTP verified, proceeding with payment using session ID:", paymentSessionId);
+
       if (paymentSessionId) {
         await initiatePayment(paymentSessionId);
       } else {

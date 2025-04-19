@@ -18,7 +18,6 @@ class Singleton {
       dbName: "sitedeals", // Explicitly set database name
     });
     this.mongoosePromise
-      .then(() => console.log("MongoDB connected via Mongoose"))
       .catch((err) => console.error("MongoDB connection error:", err));
 
   }
