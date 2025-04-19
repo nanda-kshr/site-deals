@@ -8,6 +8,7 @@ import { Heart, ShoppingBag, ImageOff } from "lucide-react";
 import { useAppDispatch } from "@/lib/hooks/redux";
 import { addToCart } from "@/lib/features/carts/cartsSlice";
 import axios from "axios";
+import { getimage, gotoproduct } from "@/lib/constants";
 
 type ProductCardProps = {
   data: Product;
@@ -16,51 +17,45 @@ type ProductCardProps = {
 
 export default function ProductCard({ data, className }: ProductCardProps) {
   const [isHovered, setIsHovered] = React.useState(false);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string>("");
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   const dispatch = useAppDispatch();
-
   useEffect(() => {
-    // Reset states when fileId changes
-    setImageUrl(null);
     setImageLoading(true);
     setImageError(false);
     
     const fetchImageData = async () => {
+
       try {
-        // Make POST request to get the image
-        const response = await axios.post('/api/v1/image', {
+
+        const response = await axios.post(getimage, {
           file_id: data.fileId,
         }, {
-          responseType: 'blob' // Important: we need the response as a blob
+          responseType: 'blob' 
         });
-        
-        console.log(response);
-        console.log("afnjanf----f-wefwe-fw-ef-")
         const url = URL.createObjectURL(response.data);
         setImageUrl(url);
         setImageLoading(false);
       } catch (error) {
-        console.error(`Failed to load image for product ${data.id}:`, error);
+        console.error(`Failed to load image for product ${data._id}:`, error);
         setImageLoading(false);
         setImageError(true);
       }
     };
 
-    if (data.fileId) {
+    if (data.fileId && !imageUrl || imageLoading) {
       fetchImageData();
     }
     
-    // Cleanup function to revoke object URLs when component unmounts or fileId changes
     return () => {
       if (imageUrl) {
         URL.revokeObjectURL(imageUrl);
       }
     };
-  }, [data.fileId, data.id]);
+  }, [data._id]);
 
-  // Loading animation variants
+
   const shimmerVariants = {
     initial: {
       backgroundPosition: "-300px 0",
@@ -91,21 +86,23 @@ export default function ProductCard({ data, className }: ProductCardProps) {
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    // Prioritize global price, fallback to first attribute price
     const price = data.price || data.attributes?.size[0]?.price || data.attributes?.color[0]?.price || 0;
+    console.log(data._id)
     dispatch(
       addToCart({
-        id: String(data.id),
-        title: data.title,
+        id: String(data._id),
+        title: data.name,
         fileId: data.fileId,
         price: price,
+        discount:data.discountPercentage,
+        rating: data.rating,
         quantity: 1,
+        size: "",
+        color: ""
       })
     );
   };
 
-  // Use global price with attribute fallback
   const price = data.price || data.attributes?.size[0]?.price || data.attributes?.color[0]?.price || 0;
 
   return (
@@ -121,22 +118,19 @@ export default function ProductCard({ data, className }: ProductCardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Link href={`/shop/product/${data.id}`} className="block h-full">
+      <Link href={`${gotoproduct}/${data._id}`} className="block h-full">
         <div className="relative pt-[100%] overflow-hidden bg-[#FAFAFA]">
           {imageLoading ? (
-            // Enhanced loading skeleton
             <motion.div 
               className="absolute inset-0"
               initial="initial"
               animate="animate"
             >
-              {/* Background shimmer effect */}
               <motion.div 
                 className="absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:600px_100%]"
                 variants={shimmerVariants}
               />
               
-              {/* Product placeholder */}
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <motion.div 
                   className="w-16 h-16 rounded-full flex items-center justify-center bg-white/80 backdrop-blur-sm shadow-sm"
@@ -145,7 +139,6 @@ export default function ProductCard({ data, className }: ProductCardProps) {
                   <ShoppingBag size={24} className="text-gray-400" />
                 </motion.div>
                 
-                {/* Fake content lines */}
                 <div className="absolute bottom-0 left-0 right-0 p-4 bg-white">
                   <motion.div 
                     className="h-3 w-2/3 bg-gray-200 rounded mb-2"
@@ -163,7 +156,6 @@ export default function ProductCard({ data, className }: ProductCardProps) {
               </div>
             </motion.div>
           ) : imageError ? (
-            // Enhanced error state
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100/90">
               <motion.div 
                 initial={{ scale: 0.8, opacity: 0 }}
@@ -183,7 +175,6 @@ export default function ProductCard({ data, className }: ProductCardProps) {
               </motion.span>
             </div>
           ) : (
-            // Successfully loaded image with fade-in effect
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -191,8 +182,8 @@ export default function ProductCard({ data, className }: ProductCardProps) {
               className="absolute inset-0"
             >
               <Image
-                src={imageUrl || ''}
-                alt={data.title}
+                src={imageUrl}
+                alt={`product_image_${data.name}`}
                 fill
                 className="object-contain p-4 transition-transform duration-500 group-hover:scale-105"
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -201,18 +192,17 @@ export default function ProductCard({ data, className }: ProductCardProps) {
             </motion.div>
           )}
           
-          {data.discount > 0 && !imageLoading && (
+          {data.discountPercentage > 0 && !imageLoading && (
             <motion.div 
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
               className="absolute top-3 left-3 bg-black text-white text-xs font-medium py-1 px-2 rounded"
             >
-              -{data.discount}%
+              -{data.discountPercentage}%
             </motion.div>
           )}
           
-          {/* Quick action buttons */}
           <div 
             className={cn(
               "absolute bottom-0 left-0 right-0 flex justify-center p-3 bg-white/80 backdrop-blur-sm transition-all duration-300",
@@ -243,13 +233,13 @@ export default function ProductCard({ data, className }: ProductCardProps) {
             // Actual content
             <>
               <h3 className="font-medium text-black text-base mb-1 line-clamp-2 group-hover:underline decoration-1 underline-offset-2">
-                {data.title}
+                {data.name}
               </h3>
               
               <div className="flex items-center gap-2 mb-2">
                 <div className="flex gap-0.5">
                   {[...Array(5)].map((_, i) => (
-                    <span key={i} className={cn("text-xs", i < Math.floor(data.rating || 0) ? "text-black" : "text-black/30")}>
+                    <span key={`key_${data._id}_${i}`} className={cn("text-xs", i < Math.floor(data.rating || 0) ? "text-black" : "text-black/30")}>
                       ★
                     </span>
                   ))}
@@ -261,7 +251,7 @@ export default function ProductCard({ data, className }: ProductCardProps) {
                 <span className="font-semibold text-black">
                   ${price.toFixed(2)}
                 </span>
-                {data.discount > 0 && (
+                {data.discountPercentage > 0 && (
                   <span className="text-black/50 text-sm line-through">
                     ${(data.price || 0).toFixed(2)}
                   </span>

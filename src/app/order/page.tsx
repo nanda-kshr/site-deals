@@ -3,22 +3,49 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { integralCF } from "@/styles/fonts";
+import { Package, Truck, Check, AlertCircle, Clock, MapPin, User, Mail, Phone, Box, CreditCard, Calendar, ShoppingBag } from "lucide-react";
+import { trackorder } from "@/lib/constants";
+
+// Updated interface to match your MongoDB document structure
+interface OrderItem {
+  productId: {
+    $oid: string;
+  };
+  quantity: number;
+  _id: {
+    $oid: string;
+  };
+}
+
+interface OrderDetails {
+  _id: {
+    $oid: string;
+  };
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  items: OrderItem[];
+  totalAmount: number;
+  status: string;
+  paymentStatus: string;
+  createdAt: {
+    $date: string;
+  };
+  updatedAt: {
+    $date: string;
+  };
+}
 
 export default function OrderPage() {
   const [orderId, setOrderId] = useState("");
-  const [orderDetails, setOrderDetails] = useState<null | {
-    email: string;
-    phone: string;
-    productId: string;
-    quantity: number;
-    variant: string;
-    size: string;
-    status: string;
-    address: string;
-    otp: string;
-  }>(null);
+  const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [searchAnimation, setSearchAnimation] = useState(false);
 
   const handleTrackOrder = async () => {
     if (!orderId) {
@@ -28,9 +55,10 @@ export default function OrderPage() {
 
     setError(null);
     setIsLoading(true);
+    setSearchAnimation(true);
 
     try {
-      const response = await fetch("/api/v1/order/track", {
+      const response = await fetch(trackorder, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderId }),
@@ -42,84 +70,384 @@ export default function OrderPage() {
 
       const data = await response.json();
       setOrderDetails(data);
-    } catch (err: Error | unknown) {
+      console.log("Order details:", data);
+    } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Something went wrong. Please try again.";
       setError(errorMessage); 
     } finally {
       setIsLoading(false);
+      setTimeout(() => setSearchAnimation(false), 500);
+    }
+  };
+
+  // Format date from MongoDB date string
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getStatusStage = () => {
+    if (!orderDetails) return 0;
+    
+    switch(orderDetails.status.toLowerCase()) {
+      case 'pending': return 1;
+      case 'processing': return 2;
+      case 'shipped': return 3;
+      case 'delivered': return 4;
+      default: return 1;
+    }
+  };
+
+  const getPaymentStatusColor = (status: string) => {
+    switch(status.toLowerCase()) {
+      case 'paid': return 'text-green-600';
+      case 'pending': return 'text-amber-600';
+      case 'failed': return 'text-red-600';
+      default: return 'text-gray-600';
     }
   };
 
   return (
-    <main className="pb-20 bg-white">
-      <div className="max-w-frame mx-auto px-4 xl:px-0">
-        <h2 className="font-bold text-[32px] md:text-[40px] text-black uppercase mb-5 md:mb-6">
-          Track Your Order
-        </h2>
-
-        {/* Order ID Input */}
-        <div className="flex flex-col items-start space-y-4 mb-8">
-          <Input
-            type="text"
-            placeholder="Enter Order ID"
-            value={orderId}
-            onChange={(e) => setOrderId(e.target.value)}
-            className="border-black/20 text-black w-full max-w-sm"
-          />
-          {error && <p className="text-red-600 text-sm">{error}</p>}
-          <Button
-            onClick={handleTrackOrder}
-            disabled={isLoading}
-            className="bg-black text-white rounded-full px-6 py-3"
-          >
-            {isLoading ? "Tracking..." : "Track Order"}
-          </Button>
-        </div>
-
-        {/* Order Details */}
-        {orderDetails && (
-          <div className="p-5 rounded-[20px] border border-black/10 w-full max-w-lg">
-            <h3 className="text-xl font-bold text-black mb-4">Order Details</h3>
-            <div className="space-y-2">
-              <p>
-                <strong>Email:</strong> {orderDetails.email}
-              </p>
-              <p>
-                <strong>Phone:</strong> {orderDetails.phone}
-              </p>
-              <p>
-                <strong>Product ID:</strong> {orderDetails.productId}
-              </p>
-              <p>
-                <strong>Quantity:</strong> {orderDetails.quantity}
-              </p>
-              <p>
-                <strong>Variant:</strong> {orderDetails.variant}
-              </p>
-              <p>
-                <strong>Size:</strong> {orderDetails.size}
-              </p>
-              <p>
-                <strong>Status:</strong>{" "}
-                <span
-                  className={`${
-                    orderDetails.status === "paid"
-                      ? "text-green-600"
-                      : "text-red-600"
-                  } font-semibold`}
+    <main className="min-h-screen bg-[#FAFAFA] py-12">
+      <div className="max-w-5xl mx-auto px-4 xl:px-0">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="bg-white rounded-3xl shadow-xl overflow-hidden"
+        >
+          {/* Header */}
+          <div className="bg-black text-white p-8 relative overflow-hidden">
+            <div className="absolute inset-0 opacity-10">
+              {[...Array(20)].map((_, i) => (
+                <div 
+                  key={i} 
+                  className="absolute text-[10px] text-white/30"
+                  style={{
+                    top: `${Math.random() * 100}%`,
+                    left: `${Math.random() * 100}%`,
+                    transform: `rotate(${Math.random() * 360}deg)`
+                  }}
                 >
-                  {orderDetails.status}
-                </span>
-              </p>
-              <p>
-                <strong>Address:</strong> {orderDetails.address}
-              </p>
-              <p>
-                <strong>OTP:</strong> {orderDetails.otp}
+                  #
+                </div>
+              ))}
+            </div>
+            
+            <div className="relative z-10">
+              <h2 className={cn(
+                integralCF.className,
+                "text-3xl md:text-4xl font-bold mb-2"
+              )}>
+                TRACK YOUR ORDER
+              </h2>
+              <p className="text-white/70 max-w-md">
+                Enter your order ID to track your package and get real-time updates on its journey to you.
               </p>
             </div>
           </div>
-        )}
+
+          {/* Search Box */}
+          <div className="p-8 border-b border-gray-100">
+            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
+              <div className="relative w-full max-w-lg">
+                <Input
+                  type="text"
+                  placeholder="Enter your Order ID"
+                  value={orderId}
+                  onChange={(e) => setOrderId(e.target.value)}
+                  className="border-2 border-black/10 text-black h-14 pl-12 pr-4 rounded-xl focus:border-black transition-colors"
+                />
+                <Package className="absolute left-4 top-1/2 transform -translate-y-1/2 text-black/40" size={20} />
+                
+                <motion.div 
+                  className="absolute inset-0 bg-black/5 rounded-xl pointer-events-none"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: searchAnimation ? 1 : 0 }}
+                  transition={{ duration: 0.2 }}
+                />
+              </div>
+              
+              <Button
+                onClick={handleTrackOrder}
+                disabled={isLoading}
+                className="bg-black text-white rounded-xl px-8 py-3 h-14 text-base font-medium hover:bg-black/80 transition-colors flex-shrink-0 w-full md:w-auto"
+              >
+                {isLoading ? (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                    className="mr-2"
+                  >
+                    <Clock size={18} />
+                  </motion.div>
+                ) : (
+                  <Truck size={18} className="mr-2" />
+                )}
+                {isLoading ? "Searching..." : "Track Order"}
+              </Button>
+            </div>
+            
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }} 
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-4 flex items-center text-red-600 bg-red-50 px-4 py-3 rounded-lg"
+              >
+                <AlertCircle size={18} className="mr-2 flex-shrink-0" />
+                <p className="text-sm">{error}</p>
+              </motion.div>
+            )}
+          </div>
+
+          {/* Order Details */}
+          {orderDetails && (
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="p-8"
+            >
+              {/* Order Summary Header */}
+              <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center">
+                <div>
+                  <h3 className="text-xl font-bold text-black">Order #{orderDetails._id.$oid}</h3>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Calendar size={16} className="text-gray-500" />
+                    <p className="text-sm text-gray-600">
+                      Placed on {formatDate(orderDetails.createdAt.$date)}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-4 md:mt-0 flex gap-2">
+                  <div className="px-4 py-1 rounded-full bg-gray-100 flex items-center">
+                    <span className="text-sm font-medium">
+                      Status: <span className="text-amber-600">{orderDetails.status.charAt(0).toUpperCase() + orderDetails.status.slice(1)}</span>
+                    </span>
+                  </div>
+                  <div className={cn(
+                    "px-4 py-1 rounded-full flex items-center",
+                    orderDetails.paymentStatus === "paid" ? "bg-green-50" : "bg-amber-50"
+                  )}>
+                    <span className="text-sm font-medium">
+                      Payment: <span className={getPaymentStatusColor(orderDetails.paymentStatus)}>
+                        {orderDetails.paymentStatus.charAt(0).toUpperCase() + orderDetails.paymentStatus.slice(1)}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Order Status Timeline */}
+              <div className="mb-10">
+                <h3 className="text-lg font-bold text-black mb-6">Shipping Status</h3>
+                <div className="relative">
+                  {/* Progress Bar */}
+                  <div className="absolute top-5 left-5 right-5 h-1 bg-gray-200">
+                    <motion.div 
+                      className="absolute top-0 left-0 h-full bg-black"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(getStatusStage() / 4) * 100}%` }}
+                      transition={{ duration: 1, delay: 0.5 }}
+                    />
+                  </div>
+                  
+                  {/* Status Steps */}
+                  <div className="flex justify-between relative">
+                    {[
+                      { label: "Order Placed", icon: Package },
+                      { label: "Processing", icon: Box },
+                      { label: "Shipped", icon: Truck },
+                      { label: "Delivered", icon: Check }
+                    ].map((step, index) => {
+                      const isActive = getStatusStage() >= index + 1;
+                      const Icon = step.icon;
+                      
+                      return (
+                        <div key={index} className="flex flex-col items-center">
+                          <motion.div 
+                            className={cn(
+                              "w-11 h-11 rounded-full flex items-center justify-center z-10",
+                              isActive ? "bg-black text-white" : "bg-gray-100 text-gray-400"
+                            )}
+                            initial={{ scale: 0.8 }}
+                            animate={{ scale: isActive ? 1 : 0.8 }}
+                            transition={{ duration: 0.3, delay: 0.1 * index }}
+                          >
+                            <Icon size={20} />
+                          </motion.div>
+                          <span className={cn(
+                            "text-sm mt-2 font-medium text-center",
+                            isActive ? "text-black" : "text-gray-400"
+                          )}>
+                            {step.label}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Order Information Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Customer Information */}
+                <div className="border border-gray-200 rounded-xl p-6 bg-gray-50/50">
+                  <h4 className="text-lg font-bold text-black mb-4 flex items-center">
+                    <User size={18} className="mr-2" />
+                    Customer Information
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <User size={16} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm text-gray-500">Name</p>
+                        <p className="font-medium">{orderDetails.name}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Mail size={16} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm text-gray-500">Email</p>
+                        <p className="font-medium">{orderDetails.email}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <Phone size={16} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm text-gray-500">Phone</p>
+                        <p className="font-medium">{orderDetails.phone}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <MapPin size={16} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm text-gray-500">Shipping Address</p>
+                        <p className="font-medium">{orderDetails.address}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Payment Information */}
+                <div className="border border-gray-200 rounded-xl p-6 bg-gray-50/50">
+                  <h4 className="text-lg font-bold text-black mb-4 flex items-center">
+                    <CreditCard size={18} className="mr-2" />
+                    Payment Details
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex items-start gap-3">
+                      <div className="w-4 h-4 rounded-full bg-black mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm text-gray-500">Order ID</p>
+                        <p className="font-medium font-mono">{orderDetails._id.$oid}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="w-4 h-4 rounded-full bg-black mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm text-gray-500">Total Amount</p>
+                        <p className="font-medium">₹{orderDetails.totalAmount.toFixed(2)}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="w-4 h-4 rounded-full bg-black mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm text-gray-500">Payment Status</p>
+                        <p className={cn(
+                          "font-medium",
+                          getPaymentStatusColor(orderDetails.paymentStatus)
+                        )}>
+                          {orderDetails.paymentStatus.charAt(0).toUpperCase() + orderDetails.paymentStatus.slice(1)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-3">
+                      <div className="w-4 h-4 rounded-full bg-black mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm text-gray-500">Order Date</p>
+                        <p className="font-medium">{formatDate(orderDetails.createdAt.$date)}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Order Items */}
+              <div className="mt-6 border border-gray-200 rounded-xl p-6 bg-white">
+                <h4 className="text-lg font-bold text-black mb-4 flex items-center">
+                  <ShoppingBag size={18} className="mr-2" />
+                  Order Items
+                </h4>
+                
+                <div className="space-y-4">
+                  {orderDetails.items.map((item, index) => (
+                    <div key={index} className="border-b border-gray-100 pb-4 last:border-b-0 last:pb-0">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center mr-4">
+                            <Box size={20} className="text-gray-400" />
+                          </div>
+                          <div>
+                            <p className="font-medium">Product ID: {item.productId.$oid}</p>
+                            <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Help Box */}
+              <div className="mt-8 bg-gray-50 rounded-xl p-6 border border-gray-200">
+                <h4 className="text-lg font-bold text-black mb-2">Need Help?</h4>
+                <p className="text-gray-600 mb-4">
+                  If you have any questions about your order, please don&apos;t hesitate to contact our customer support team.
+                </p>
+                <Button
+                  variant="outline"
+                  className="border-black text-black hover:bg-black hover:text-white transition-colors"
+                >
+                  Contact Support
+                </Button>
+              </div>
+            </motion.div>
+          )}
+          
+          {/* Empty State */}
+          {!orderDetails && !isLoading && !error && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="py-16 px-8 flex flex-col items-center text-center"
+            >
+              <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+                <Package size={32} className="text-gray-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-black mb-2">Track Your Package</h3>
+              <p className="text-gray-500 max-w-md mb-6">
+                Enter your order ID above to see detailed information about your order status and delivery timeline.
+              </p>
+              <div className="w-full max-w-md p-4 bg-gray-50 rounded-xl border border-gray-200">
+                <p className="text-sm text-gray-600">
+                  Your order ID format example:
+                </p>
+                <p className="font-mono text-black font-medium my-2">67ff359a6df6ff6377a3e9e0</p>
+                <p className="text-sm text-gray-600">
+                  You can find it in your order confirmation email or in your account orders section.
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </motion.div>
       </div>
     </main>
   );

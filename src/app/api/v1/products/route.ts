@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
-import Product, { IProduct } from "@/models/Product";
+import Product from "@/models/Product";
 import mongoose from "mongoose";
 
+import type { Product as ProductType } from "@/types/product.types";
 interface ProductResponse {
   _id: string;
   name: string;
@@ -40,10 +41,9 @@ export async function GET(request: Request) {
     const products = (await Product.find()
       .skip(skip)
       .limit(limit)
-      .lean<Array<IProduct & { _id: mongoose.Types.ObjectId }>>()
+      .lean<Array<ProductType & { _id: mongoose.Types.ObjectId }>>()
       .then((docs) =>
         docs.map((doc) => {
-          console.log("doc.createdAt:", doc.createdAt, typeof doc.createdAt); // Enhanced debug log
           const createdAt = typeof doc.createdAt === "string" && doc.createdAt
             ? doc.createdAt
             : new Date().toISOString();
@@ -53,6 +53,7 @@ export async function GET(request: Request) {
             fileId: doc.fileId,
             gallery: doc.gallery || [],
             description: doc.description || "",
+            price: doc.price,
             createdAt: createdAt,
             attributes: doc.attributes || { size: [], color: [] },
             rating: doc.rating || 0,

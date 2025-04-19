@@ -8,12 +8,12 @@ import * as motion from "framer-motion/client";
 
 export default function ContactPage() {
     return (
-        <div className="bg-gradient-to-b from-white to-gray-100 min-h-screen py-10 px-4">
+        <div className="bg-gradient-to-b from-white to-gray-100 min-h-screen py-10 px-4 sm:px-6 lg:px-8">
             <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-                className="md:max-w-4xl mx-[var(--content-margin)]"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="max-w-4xl mx-auto w-full"
             >
                 {/* Header */}
                 <div className="text-center mb-10">

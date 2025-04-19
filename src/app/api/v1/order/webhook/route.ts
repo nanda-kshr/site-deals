@@ -98,9 +98,10 @@ export async function POST(request: Request) {
       data.payment?.payment_status && 
       ["completed", "success", "paid"].includes(data.payment.payment_status.toLowerCase())
     ) {
-      order.status = "processing"; // Using a valid status from the enum
+      order.status = "processing"; 
+      order.paymentStatus = "paid"; 
     } else {
-      order.status = "pending"; // Default to a valid status
+      order.status = "pending"; 
       console.warn(
         `Unexpected paymentStatus for order ${data.order.order_id}: ${data.payment?.payment_status}`
       );

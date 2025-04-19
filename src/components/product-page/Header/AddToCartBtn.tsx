@@ -15,13 +15,15 @@ const AddToCartBtn = ({ data }: { data: Product & { quantity: number } }) => {
       onClick={() =>
         dispatch(
           addToCart({
-            id: String(data.id || ''),
-            title: data.title,
+            id: data._id.$oid,
+            title: data.name,
             fileId: data.fileId,
             price: data.price,
-            discount: data.discount,
+            discount: data.discountPercentage,
             quantity: data.quantity,
             rating: data.rating,
+            size: data.attributes?.size[0]?.value || "",
+            color: data.attributes?.color[0]?.value || "",
 
           })
         )

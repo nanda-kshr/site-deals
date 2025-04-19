@@ -5,9 +5,11 @@ interface CartItem {
   title: string;
   fileId: string;
   price: number;
-  discount: number; // Percentage, e.g., 5 for 5%
+  discount: number;
   rating: number;
   quantity: number;
+  size: string;
+  color: string;
 }
 
 interface CartState {
@@ -29,24 +31,26 @@ const cartsSlice = createSlice({
   initialState,
   reducers: {
     addToCart(state, action: PayloadAction<CartItem>) {
-      if (!state.items) state.items = []; // Safeguard
+      if (!state.items) state.items = [];
       const item = state.items.find((i) => i.id === action.payload.id);
+    
       if (item) {
-        item.quantity += 1;
+        item.quantity += action.payload.quantity;
       } else {
-        state.items.push({ ...action.payload, quantity: 1 });
+        state.items.push({ ...action.payload });
       }
-      // Update total prices
+    
       state.totalPrice = state.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
       state.adjustedTotalPrice = state.items.reduce(
         (sum, i) => sum + i.price * (1 - (i.discount || 0) / 100) * i.quantity,
         0
       );
     },
+
+
     removeFromCart(state, action: PayloadAction<string>) {
-      if (!state.items) state.items = []; // Safeguard
+      if (!state.items) state.items = []; 
       state.items = state.items.filter((i) => i.id !== action.payload);
-      // Update total prices
       state.totalPrice = state.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
       state.adjustedTotalPrice = state.items.reduce(
         (sum, i) => sum + i.price * (1 - (i.discount || 0) / 100) * i.quantity,
@@ -54,16 +58,15 @@ const cartsSlice = createSlice({
       );
     },
     updateQuantity(state, action: PayloadAction<{ id: string; quantity: number }>) {
-      if (!state.items) state.items = []; // Safeguard
+      if (!state.items) state.items = []; 
       const item = state.items.find((i) => i.id === action.payload.id);
       if (item) {
         item.quantity = action.payload.quantity;
-        // Remove item if quantity is 0 or less
         if (item.quantity <= 0) {
           state.items = state.items.filter((i) => i.id !== action.payload.id);
         }
       }
-      // Update total prices
+      console.log("quantity 2 - ",item)
       state.totalPrice = state.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
       state.adjustedTotalPrice = state.items.reduce(
         (sum, i) => sum + i.price * (1 - (i.discount || 0) / 100) * i.quantity,

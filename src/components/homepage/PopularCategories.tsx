@@ -3,8 +3,9 @@ import { integralCF } from "@/styles/fonts";
 import React from "react";
 import * as motion from "framer-motion/client";
 import CategoryCard from "./CategoryCard";
-import { LucideIcon } from "lucide-react"; // For typing
+import { LucideIcon } from "lucide-react"; 
 import { Monitor, Utensils, ToyBrick, Book } from "lucide-react";
+
 type Category = {
   title: string;
   description: string;
@@ -20,28 +21,28 @@ const PopularCategories = () => {
     {
       title: "Electronics",
       description: "Latest tech & gadgets",
-      url: "/category/electronics",
+      url: "/shop",
       icon: Monitor,
       accentColor: "from-blue-500/20",
     },
     {
       title: "Home & Kitchen",
       description: "Essentials for your space",
-      url: "/category/home-kitchen",
+      url: "/shop",
       icon: Utensils,
       accentColor: "from-green-500/20",
     },
     {
       title: "Toys & Games",
       description: "For all ages",
-      url: "/category/toys-games",
+      url: "/shop",
       icon: ToyBrick,
       accentColor: "from-purple-500/20",
     },
     {
       title: "Books & Media",
       description: "Bestsellers & new releases",
-      url: "/category/books-media",
+      url: "/shop",
       icon: Book,
       accentColor: "from-amber-500/20",
     },

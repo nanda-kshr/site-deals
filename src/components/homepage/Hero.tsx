@@ -8,9 +8,10 @@ import * as motion from "framer-motion/client";
 import { Product } from "@/types/product.types";
 import axios from "axios";
 import { ImageOff } from "lucide-react";
+import { getimage } from "@/lib/constants";
 
 type HeroProps = {
-  bestFeature?: Product | null;
+  bestFeature: Product;
 };
 
 
@@ -26,27 +27,23 @@ const Hero = ({ bestFeature }: HeroProps) => {
   const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
-    // Reset states when bestFeature changes
     setFeatureImageUrl(null);
     setImageLoading(true);
     setImageError(false);
     
     const fetchFeatureImage = async () => {
-      // If there's no bestFeature or no fileId, don't attempt to fetch
-      if (!bestFeature?.fileId) {
+      if (!bestFeature.fileId) {
         setImageLoading(false);
         return;
       }
       
       try {
-        // Make POST request to get the image
-        const response = await axios.post('/api/v1/image', {
+        const response = await axios.post(getimage, {
           file_id: bestFeature.fileId,
         }, {
-          responseType: 'blob' // Important: we need the response as a blob
+          responseType: 'blob'
         });
         
-        // Create a temporary URL for the blob data
         const url = URL.createObjectURL(response.data);
         setFeatureImageUrl(url);
         setImageLoading(false);
@@ -60,7 +57,6 @@ const Hero = ({ bestFeature }: HeroProps) => {
 
     fetchFeatureImage();
     
-    // Cleanup function to revoke object URLs when component unmounts or bestFeature changes
     return () => {
       if (featureImageUrl) {
         URL.revokeObjectURL(featureImageUrl);
@@ -68,7 +64,7 @@ const Hero = ({ bestFeature }: HeroProps) => {
     };
   }, [bestFeature]);
 
-  // Loading animation variants
+
   const shimmerVariants = {
     initial: {
       backgroundPosition: "-500px 0",
@@ -187,9 +183,8 @@ const Hero = ({ bestFeature }: HeroProps) => {
             >
               {bestFeature ? (
                 <div className="relative w-full h-[180px] md:h-[240px] flex flex-col items-center">
-                  <Link href={`/shop/product/${bestFeature.id}`} className="block w-full h-full relative">
+                  <Link href={`/shop/product/${bestFeature._id.$oid}`} className="block w-full h-full relative">
                     {imageLoading ? (
-                      // Enhanced loading skeleton
                       <motion.div 
                         className="absolute inset-0 rounded-lg overflow-hidden"
                         initial="initial"
@@ -256,9 +251,9 @@ const Hero = ({ bestFeature }: HeroProps) => {
                           priority
                           src={featureImageUrl || ''}
                           fill
-                          alt={bestFeature.title}
+                          alt={bestFeature.name}
                           className="object-contain rounded-lg"
-                          aria-label={`Featured product: ${bestFeature.title}`}
+                          aria-label={`Featured product: ${bestFeature.name}`}
                           onError={() => setImageError(true)}
                         />
                       </motion.div>
@@ -274,13 +269,13 @@ const Hero = ({ bestFeature }: HeroProps) => {
                       <div className="w-2 h-2 rounded-full bg-green-500"></div>
                       <span className="text-xs font-medium">Best Seller</span>
                     </div>
-                    {bestFeature.discount > 0 ? (
+                    {bestFeature.discountPercentage > 0 ? (
                       <>
                         <span className="font-bold text-lg md:text-xl text-amber-500">
-                          -{bestFeature.discount}%
+                          -{bestFeature.discountPercentage}%
                         </span>
                         <span className="text-gray-600 text-xs block">
-                          ${(bestFeature.price * (1 - bestFeature.discount / 100)).toFixed(2)}
+                          ${(bestFeature.price * (1 - bestFeature.discountPercentage / 100)).toFixed(2)}
                         </span>
                       </>
                     ) : (

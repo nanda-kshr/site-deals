@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion"; // Corrected import
+import { motion } from "framer-motion"; 
 import { cn } from "@/lib/utils";
 import { integralCF } from "@/styles/fonts";
 import Rating from "@/components/ui/Rating";
@@ -13,8 +13,8 @@ import { useAppDispatch } from "@/lib/hooks/redux";
 import { addToCart } from "@/lib/features/carts/cartsSlice";
 import { ArrowLeft, Heart, ImageOff, Share2, ShoppingBag, Truck } from "lucide-react";
 import axios from "axios";
+import { getimage, getproduct } from "@/lib/constants";
 
-// Define ProductSkeleton locally
 function ProductSkeleton() {
   return (
     <div className="max-w-frame mx-auto px-4 py-8 bg-white min-h-screen">
@@ -41,19 +41,24 @@ function ProductSkeleton() {
   );
 }
 
-// Define ProductImageGallery locally
 function ProductImageGallery({
   product,
   selectedImageUrl,
   setSelectedImageUrl,
+  setImageUrls,
   imageUrls,
-  imageError,
 }: {
   product: Product;
   selectedImageUrl: string | null;
   setSelectedImageUrl: (url: string | null) => void;
+  setImageUrls: React.Dispatch<
+    React.SetStateAction<{
+      fileId: string;
+      url: string | null;
+      attribute?: { key: string; value: string };
+    }[]>
+  >;
   imageUrls: { fileId: string; url: string | null; attribute?: { key: string; value: string } }[];
-  imageError: boolean;
 }) {
   useEffect(() => {
     const fetchAdditionalImages = async () => {
@@ -68,7 +73,7 @@ function ProductImageGallery({
         .map(async (fileId) => {
           try {
             const imageResponse = await axios.post(
-              "/api/v1/image",
+              getimage,
               { file_id: fileId },
               { responseType: "blob" }
             );
@@ -99,7 +104,7 @@ function ProductImageGallery({
     ) {
       fetchAdditionalImages();
     }
-  }, [product.gallery, product.attributes, imageUrls]);
+  }, [product.gallery, product.attributes, imageUrls, product.fileId, setImageUrls]);
 
   return (
     <div className="space-y-4">
@@ -113,20 +118,16 @@ function ProductImageGallery({
           <div className="absolute inset-0 flex items-center justify-center bg-gray-200">
             <ShoppingBag size={24} className="text-gray-400 animate-pulse" />
           </div>
-        ) : imageError ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-            <ImageOff size={28} className="text-red-400" />
-          </div>
-        ) : (
+        ) : 
           <Image
             src={selectedImageUrl}
-            alt={`${product.title} main product image`}
+            alt={`${product.name} main product image`}
             fill
             className="object-contain p-6"
             priority
             sizes="(max-size: 768px) 100vw, 50vw"
           />
-        )}
+        }
         <div className="absolute top-4 right-4 flex flex-col gap-2">
           <motion.button
             whileHover={{ scale: 1.1 }}
@@ -161,7 +162,7 @@ function ProductImageGallery({
               {img.url ? (
                 <Image
                   src={img.url}
-                  alt={`${product.title} view ${index + 1} ${img.attribute ? `(${img.attribute.key}: ${img.attribute.value})` : ""}`}
+                  alt={`${product.name} view ${index + 1} ${img.attribute ? `(${img.attribute.key}: ${img.attribute.value})` : ""}`}
                   fill
                   className="object-contain p-1"
                   sizes="80px"
@@ -220,7 +221,7 @@ function ProductDetails({
       className="flex flex-col"
     >
       <h1 className={cn(integralCF.className, "text-2xl md:text-3xl lg:text-4xl text-black mb-3")}>
-        {product.title}
+        {product.name}
       </h1>
 
       <div className="flex items-center mb-4">
@@ -248,26 +249,9 @@ function ProductDetails({
         {product.description}
       </p>
 
-      {product.designTypes && product.designTypes.length > 0 && (
-        <div className="mb-6">
-          <h3 className="text-sm font-semibold text-black mb-3">Design Options</h3>
-          <div className="flex flex-wrap gap-2">
-            {product.designTypes.map((type, index) => (
-              <motion.button
-                key={index}
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.95 }}
-                className="text-sm border-2 border-black bg-white text-black px-4 py-2 rounded-lg hover:bg-black hover:text-white transition-colors duration-200"
-              >
-                {type}
-              </motion.button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Size Selection */}
-      {product.attributes?.size.length > 0 && (
+      {product.attributes && product.attributes.size.length > 0 && (
         <div className="mb-6">
           <h3 className="text-sm font-semibold text-black mb-3">Size</h3>
           <div className="flex flex-wrap gap-2">
@@ -290,7 +274,7 @@ function ProductDetails({
       )}
 
       {/* Color Selection */}
-      {product.attributes?.color.length > 0 && (
+      {product.attributes && product.attributes.color.length > 0 && (
         <div className="mb-6">
           <h3 className="text-sm font-semibold text-black mb-3">Color</h3>
           <div className="flex flex-wrap gap-2">
@@ -351,7 +335,7 @@ function ProductDetails({
 
       {/* Action Buttons */}
       <div className="flex gap-3 mb-6">
-        <motion.button
+      <motion.button
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5, duration: 0.5 }}
@@ -359,10 +343,18 @@ function ProductDetails({
           whileTap={{ scale: 0.98 }}
           className={cn(
             "bg-black text-white px-6 py-3.5 rounded-lg flex-1 flex items-center justify-center gap-2 font-medium shadow-lg hover:shadow-xl transition-all duration-300",
-            (!selectedSize || !selectedColor) && "opacity-50 cursor-not-allowed"
+            ((product.attributes?.size.length || 0 )> 0 && !selectedSize) ||
+              ((product.attributes?.color.length|| 0 )> 0 && !selectedColor)
+              ? "opacity-50 cursor-not-allowed"
+              : ""
           )}
-          onClick={handleAddToCart}
-          disabled={!selectedSize || !selectedColor}
+          onClick={()=>{
+            console.log("Add to Cart Clicked");
+            handleAddToCart()}}
+          disabled={
+            ((product.attributes?.size.length || 0) > 0 && !selectedSize) ||
+            ((product.attributes?.color.length || 0) > 0 && !selectedColor)
+          }
         >
           <ShoppingBag size={18} />
           Add to Cart
@@ -404,7 +396,8 @@ function ProductDetails({
   );
 }
 
-export default function ProductPage({ params }: { params: { id: string } }) {
+export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = React.use(params);
   const dispatch = useAppDispatch();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -412,21 +405,19 @@ export default function ProductPage({ params }: { params: { id: string } }) {
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
   const [imageUrls, setImageUrls] = useState<{ fileId: string; url: string | null; attribute?: { key: string; value: string } }[]>([]);
   const [imageLoading, setImageLoading] = useState(true);
-  const [imageError, setImageError] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
-
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const response = await fetch(`/api/v1/product`, {
+        const response = await fetch(getproduct, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ id: params.id }),
+          body: JSON.stringify({ id: id }),
         });
 
         if (!response.ok) {
@@ -438,20 +429,19 @@ export default function ProductPage({ params }: { params: { id: string } }) {
 
         const data = await response.json();
         const mappedProduct: Product = {
-          id: data._id,
-          title: data.name,
+          _id: data._id,
+          name: data.name,
           fileId: data.fileId,
           gallery: data.gallery || [],
           description: data.description,
+          discountPercentage: data.discountPercentage || 0,
           createdAt: data.createdAt || new Date().toISOString(),
-          _id: "",
           attributes: data.attributes || { size: [], color: [] },
-          rating: data.rating || 0,
-          price: data.price || 0, // Include price from API
+          rating: data.rating || 3,
+          price: data.price || 0,
         };
 
         setProduct(mappedProduct);
-        // Fetch all image URLs (main fileId, galleries, and attribute photos)
         const allFileIds = [
           mappedProduct.fileId,
           ...mappedProduct.gallery,
@@ -461,7 +451,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
         const imagePromises = allFileIds.map(async (fileId) => {
           try {
             const imageResponse = await axios.post(
-              "/api/v1/image",
+              getimage,
               { file_id: fileId },
               { responseType: "blob" }
             );
@@ -473,7 +463,6 @@ export default function ProductPage({ params }: { params: { id: string } }) {
         });
         const urls = await Promise.all(imagePromises);
         setImageUrls(urls);
-        // Set the first valid URL as the selected image
         const firstValidUrl = urls.find((img) => img.url)?.url;
         if (firstValidUrl) setSelectedImageUrl(firstValidUrl);
       } catch (err: unknown) {
@@ -485,10 +474,9 @@ export default function ProductPage({ params }: { params: { id: string } }) {
     };
 
     fetchProduct();
-  }, [params.id]);
+  }, [id]);
 
   useEffect(() => {
-    // Cleanup object URLs on unmount or when imageUrls change
     return () => {
       imageUrls.forEach((img) => {
         if (img.url) URL.revokeObjectURL(img.url);
@@ -497,25 +485,27 @@ export default function ProductPage({ params }: { params: { id: string } }) {
   }, [imageUrls]);
 
   const handleAddToCart = () => {
-    if (!product || !selectedSize || !selectedColor) return;
-
-    const price = product.price || // Use global price if available
+    if (!product) return;
+    const price = product.price || 
       (product.attributes?.size.find((s) => s.value === selectedSize)?.price ||
         product.attributes?.color.find((c) => c.value === selectedColor)?.price ||
         0);
     dispatch(
       addToCart({
-        id: String(product.id),
-        title: product.title,
+        id: String(product._id),
+        title: product.name,
         fileId: product.fileId,
         price: price,
         quantity: quantity,
-        size: selectedSize,
-        color: selectedColor,
+        discount: product.discountPercentage,
+        rating: product.rating,
+        size: selectedSize || "",
+        color: selectedColor || "",
       })
     );
   };
 
+  console.log(quantity)
   const incrementQuantity = () => setQuantity((prev) => prev + 1);
   const decrementQuantity = () => setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
   const toggleFavorite = () => setIsFavorite(!isFavorite);
@@ -560,8 +550,8 @@ export default function ProductPage({ params }: { params: { id: string } }) {
             product={product}
             selectedImageUrl={selectedImageUrl}
             setSelectedImageUrl={setSelectedImageUrl}
+            setImageUrls={setImageUrls}
             imageUrls={imageUrls}
-            imageError={imageError}
           />
 
           {/* Details Section */}

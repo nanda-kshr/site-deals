@@ -9,6 +9,7 @@ import Providers from "./providers";
 import Script from "next/script";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://sitedeals.store"),
   title: "SiteDeals - Best Offers and Deals Online",
   description: "Discover the best online deals, discounts, coupons, and promotional offers on products and services across various categories. Save money with SiteDeals.",
   keywords: "deals, offers, discounts, coupons, promo codes, online shopping, best deals, sales",

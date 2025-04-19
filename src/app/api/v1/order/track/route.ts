@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     }
 
     const order = await Order.findById(orderId)
-      .select('-_id email phone productId quantity variant size status address paymentIntentId otp')
+      .select('_id name email phone address items totalAmount status paymentStatus address createdAt')
       .lean();
 
     if (!order) {

@@ -17,17 +17,22 @@ import { cn } from "@/lib/utils";
 import { integralCF } from "@/styles/fonts";
 import Image from "next/image";
 import Link from "next/link";
+import { RootState } from "@/lib/store";
+import axios from "axios";
+import { getimage } from "@/lib/constants";
 
 export default function CheckoutPage() {
   const searchParams = useSearchParams();
-  const { items, totalPrice, adjustedTotalPrice } = useAppSelector(
-    (state) => state.carts || { items: [], totalPrice: 0, adjustedTotalPrice: 0 }
-  );
-
+  const cartState = useAppSelector((state: RootState) => state.carts);
+  const items = cartState?.items || [];
+  console.log("Items in cart:", items);
   const [step, setStep] = useState<"contact" | "email" | "otp">("contact");
   const [name, setName] = useState("");
   const [countryCode, setCountryCode] = useState("+91");
   const [phone, setPhone] = useState("");
+  const [imageUrls, setImageUrls] = useState<{[key: string]: string}>({});
+  const [imageLoading, setImageLoading] = useState<{[key: string]: boolean}>({});
+  const [imageError, setImageError] = useState<{[key: string]: boolean}>({});
   const [address, setAddress] = useState("");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
@@ -81,7 +86,7 @@ export default function CheckoutPage() {
     }
   };
 
-  // Fetch checkout items from searchParams
+
   useEffect(() => {
     const itemIds = searchParams.get("itemIds")?.split(",") || [];
     const filteredItems = items.filter((item) => itemIds.includes(item.id));
@@ -101,6 +106,45 @@ export default function CheckoutPage() {
       console.warn("No matching items found for the provided itemIds");
     }
   }, [searchParams, items]);
+
+  useEffect(() => {
+    const fetchImageData = async (fileId: string) => {
+      try {
+        setImageLoading(prev => ({ ...prev, [fileId]: true }));
+        setImageError(prev => ({ ...prev, [fileId]: false }));
+
+        const response = await axios.post(
+          getimage,
+          {
+            file_id: fileId,
+          },
+          {
+            responseType: "blob",
+          }
+        );
+        const url = URL.createObjectURL(response.data);
+        setImageUrls(prev => ({ ...prev, [fileId]: url }));
+        setImageLoading(prev => ({ ...prev, [fileId]: false }));
+      } catch (error) {
+        console.error(`Failed to load image for fileId ${fileId}:`, error);
+        setImageLoading(prev => ({ ...prev, [fileId]: false }));
+        setImageError(prev => ({ ...prev, [fileId]: true }));
+      }
+    };
+
+    checkoutItems.forEach(item => {
+      if (item.fileId && !imageUrls[item.fileId]) {
+        fetchImageData(item.fileId);
+      }
+    });
+    return () => {
+      Object.values(imageUrls).forEach(url => {
+        if (url) {
+          URL.revokeObjectURL(url);
+        }
+      });
+    };
+  }, [checkoutItems, imageUrls]);
 
   const handleCheckout = async () => {
     if (!name || !phone || !address) {
@@ -379,6 +423,17 @@ export default function CheckoutPage() {
     return null;
   };
 
+
+  const totalPrice = checkoutItems.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+  
+  const adjustedTotalPrice = checkoutItems.reduce(
+    (sum, item) => sum + item.price * (1 - (item.discount || 0) / 100) * item.quantity,
+    0
+  );
+  
   return (
     <main className="pb-20 bg-white">
       <div className="max-w-frame mx-[var(--content-margin)] px-4 xl:px-0">
@@ -410,15 +465,25 @@ export default function CheckoutPage() {
                 {checkoutItems.map((item) => (
                   <div key={item.id} className="flex items-center space-x-4">
                     <div className="relative w-16 h-16 bg-[#F0EEED] rounded-md">
-                      {item.fileId && (
+                    {item.fileId && (
+                    <>
+                      {imageLoading[item.fileId] ? (
+                        <div className="animate-pulse bg-gray-200 w-full h-full rounded-md" />
+                      ) : imageError[item.fileId] ? (
+                        <div className="flex items-center justify-center h-full text-sm text-red-500">
+                          Image unavailable
+                        </div>
+                      ) : (
                         <Image
-                          src={item.fileId}
+                          src={imageUrls[item.fileId] || ""}
                           fill
                           alt={item.title}
                           className="object-contain p-2"
                           sizes="64px"
                         />
                       )}
+                    </>
+                  )}
                     </div>
                     <div className="flex-1">
                       <h4 className="text-lg font-medium text-black truncate">
@@ -437,7 +502,7 @@ export default function CheckoutPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-black/60">Subtotal</span>
-                    <span className="font-bold">₹{totalPrice.toFixed(2)}</span>
+                    <span className="font-bold">₹{(totalPrice).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-black/60">Discount</span>

@@ -1,18 +1,31 @@
-
 export type Product = {
-  createdAt: Date | string;
-  _id: string;
-  title: string;
-  fileId: string;
-  gallery?: string[];
+  _id: {
+    $oid: string;
+  };
+  id?: string;
+  name: string;
+  gallery: string[];
   price: number;
-  discount: number;
+  discountPercentage: number;
   rating: number;
-  designTypes?: string[];
+  attributes?: {
+    size: Array<{
+      value: string;
+      fileId: string;
+      price: number;
+    }>;
+    color: Array<{
+      value: string;
+      fileId: string;
+      price: number;
+    }>;
+  };
   description?: string;
-  [key: string]: string | number | string[] | Date | undefined;
+  createdAt: string;
+  updatedAt?: string;
+  fileId: string;
+};
 
-}
 export interface IProduct {
   id:string;
   name: string;

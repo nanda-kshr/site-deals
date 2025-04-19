@@ -23,6 +23,7 @@ import { integralCF } from "@/styles/fonts";
 import { Product } from "@/types/product.types";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Filter, ShoppingBag } from "lucide-react";
+import { categories, getproducts, placeholderImage, searchproducts } from "@/lib/constants";
 
 export default function ShopPage() {
   const router = useRouter();
@@ -71,7 +72,7 @@ export default function ShopPage() {
       setLoading(true);
       setError(null);
       try {
-        let url = "/api/v1/products";
+        let url = getproducts;
         const params = new URLSearchParams({
           limit: limit.toString(),
           skip: skip.toString(),
@@ -79,7 +80,7 @@ export default function ShopPage() {
         });
 
         if (searchQuery) {
-          url = "/api/v1/products/search";
+          url = searchproducts;
           params.set("q", searchQuery);
         }
 
@@ -107,23 +108,22 @@ export default function ShopPage() {
         setTotalProducts(total);
 
         const mappedProducts: Product[] = productList
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .map((item: any, index: number) => {
+          .map((item: Product, index: number) => {
             try {
               return {
-                id: item._id || item.id || `product-${index}`,
-                title: item.name || item.title || "Unnamed Product",
+                id: item._id,
+                title: item.name,
                 fileId:
-                  item.fileId ||
-                  item.image ||
-                  item.thumbnail ||
-                  "/images/placeholder.jpg",
-                gallery: item.gallery || [item.fileId || "/images/placeholder.jpg"],
-                price: parseFloat(item.price) || 0,
-                discount: parseFloat(item.discountPercentage || item.discount) || 0,
-                rating: parseFloat(item.rating) || 0,
-                stock: item.stock != null ? parseInt(item.stock, 10) : undefined,
-                designTypes: item.designTypes || [],
+                  item.fileId,
+                gallery: item.gallery || [placeholderImage],
+                price: item.price,
+                discount: item.discountPercentage,
+                rating: item.rating,
+                stock: 10,
+                attributes: item.attributes || {
+                  size: [],
+                  color: [],
+                },
                 description: item.description || "",
                 createdAt: item.createdAt || new Date(),
               };
@@ -139,7 +139,6 @@ export default function ShopPage() {
           if (sort === "high-price") return b.price - a.price;
           return b.rating - a.rating;
         });
-
         setProducts(sortedProducts);
       } catch (err: Error | unknown) {
         console.error("Fetch error:", err);
@@ -168,13 +167,7 @@ export default function ShopPage() {
 
   const totalPages = Math.max(1, Math.ceil(totalProducts / limit));
 
-  const categories = [
-    { name: "All", value: null },
-    { name: "Electronics", value: "electronics" },
-    { name: "Home & Kitchen", value: "home-kitchen" },
-    { name: "Toys & Games", value: "toys-games" },
-    { name: "Books & Media", value: "books-media" },
-  ];
+  
 
   // Animation variants
   const containerVariants = {
@@ -372,9 +365,9 @@ export default function ShopPage() {
             animate="visible"
             className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-5 md:gap-6"
           >
-            {products.map((product) => (
+            {products.map((product, i) => (
               <motion.div
-                key={typeof product.id === 'string' || typeof product.id === 'number' ? product.id : String(product.id)}
+                key={i}
                 variants={itemVariants}
               >
                 <ProductCard data={product} />

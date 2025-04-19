@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import Link from "next/link";
 
@@ -26,6 +27,7 @@ export function MenuList({ data, label }: MenuListProps) {
           {data.map((item) => (
             <ListItem key={item.id} title={item.label} href={item.url ?? "/"}>
               {item.description ?? ""}
+              <p>{item.label}</p>
             </ListItem>
           ))}
         </ul>
@@ -53,6 +55,7 @@ const ListItem = React.forwardRef<
           <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
             {children}
           </p>
+          <p>{children}</p>
         </Link>
       </NavigationMenuLink>
     </li>

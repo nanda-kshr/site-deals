@@ -8,38 +8,37 @@ import { Product } from "@/types/product.types";
 import Link from "next/link";
 
 type ProductListSecProps = {
-  title: string;
+  name: string;
   data: Product[];
   viewAllLink?: string;
-  subtitle?: string;
   categoryColor?: string;
   showBadge?: boolean;
 };
 
 const ProductListSec = ({
-  title,
+  name,
   data,
   viewAllLink,
-  subtitle,
   categoryColor = "bg-amber-100",
   showBadge = false,
 }: ProductListSecProps) => {
-  // Fallback product for padding
+
   const fallbackProduct: Product = {
-    id: "fallback",
-    title: "Coming Soon",
+    _id: { $oid: "fallback" },
+    name: "Coming Soon",
     fileId: "/images/placeholder.jpg",
     gallery: ["/images/placeholder.jpg"],
     price: 0,
-    discount: 0,
+    attributes: {
+      size: [],
+      color: [],
+    },
+    discountPercentage: 0,
     rating: 0,
     createdAt: "",
-    _id: ""
   };
 
-  // Ensure exactly 4 products
   const displayedProducts = [...data.slice(0, 4), ...Array(4 - Math.min(data.length, 4)).fill(fallbackProduct)];
-
 
   return (
     <section className="max-w-frame mx-[var(--content-margin)] px-4 xl:px-0 mb-12">
@@ -59,7 +58,7 @@ const ProductListSec = ({
                 "text-xl md:text-2xl lg:text-[32px] capitalize",
               ])}
             >
-              {title}
+              {name}
             </h2>
             {showBadge && (
               <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
@@ -67,18 +66,6 @@ const ProductListSec = ({
               </span>
             )}
           </motion.div>
-
-          {subtitle && (
-            <motion.p
-              initial={{ y: "20px", opacity: 0 }}
-              whileInView={{ y: "0", opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: 0.1 }}
-              className="text-sm text-gray-600 mb-2"
-            >
-              {subtitle}
-            </motion.p>
-          )}
         </div>
 
         {viewAllLink && (
@@ -92,7 +79,7 @@ const ProductListSec = ({
             <Link
               href={viewAllLink}
               className="text-blue-600 hover:underline font-medium text-sm flex items-center"
-              aria-label={`View all ${title} products`}
+              aria-label={`View all ${name} products`}
               >
                 <div>
 
@@ -152,7 +139,7 @@ const ProductListSec = ({
           <Link
             href={viewAllLink}
             className="w-full inline-block sm:w-[218px] px-[54px] py-3 border rounded-lg hover:bg-blue-600 hover:border-blue-600 hover:text-white text-blue-600 transition-all font-medium text-sm border-blue-200"
-            aria-label={`See more ${title} products`}
+            aria-label={`See more ${name} products`}
           >
             See More Products
           </Link>

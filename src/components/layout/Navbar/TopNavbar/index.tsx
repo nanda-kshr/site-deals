@@ -21,7 +21,7 @@ const data: NavMenu = [
     id: 2,
     type: "MenuItem",
     label: "On Sale",
-    url: "/shop#on-sale",
+    url: "/shop",
     children: [],
   },
 ];
@@ -103,14 +103,15 @@ const TopNavbar = () => {
               {data.map((item) => (
 
                 <React.Fragment key={item.id}>
+
                   {item.type === "MenuItem" && (
-                    <MenuItem label={item.label} url={item.url} />
+                    <MenuItem label={item.label} url={String(item.url)} />
                   )}
-                  <Link href={String(item.url)}>
+
+
                   {item.type === "MenuList" && (
                     <MenuList data={item.children} label={item.label} />
                   )}
-                  </Link>
                 </React.Fragment>
               ))}
             </NavigationMenuList>
