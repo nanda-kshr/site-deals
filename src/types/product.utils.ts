@@ -10,7 +10,8 @@ export function getProductId(product: Product): string {
   if (isMongoId(product._id)) {
     return product._id.$oid;
   }
-  return product._id.toString();
+  // Assume string type for non-Mongo IDs
+  return String(product._id);
 }
 
 // Default values for product

@@ -36,8 +36,10 @@ export default function Home() {
             rating: item.rating,
             fileId: item.fileId,
             createdAt: new Date().toISOString(),
-            designTypes: [],
-            stock: undefined,
+            attributes: {
+              size: [],
+              color: []
+            },
             category: undefined
           };
           

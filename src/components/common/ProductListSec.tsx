@@ -36,8 +36,6 @@ const ProductListSec = ({
     discountPercentage: 0,
     rating: 0,
     createdAt: "",
-    designTypes: [],
-    stock: undefined,
     category: undefined
   };
 

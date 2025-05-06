@@ -1,4 +1,5 @@
 export type Product = {
+  category: undefined;
   _id: {
     $oid: string;
   };

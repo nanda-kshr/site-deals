@@ -1,16 +1,23 @@
 import { NextResponse } from "next/server";
-import { connectToDatabase } from "@/lib/mongodb";
+import { connectDB } from "@/lib/db";
 
 export async function GET() {
   try {
-    const { db } = await connectToDatabase();
+    const { db } = await connectDB();
+    if (!db) {
+      return NextResponse.json(
+        { error: "Database connection failed" },
+        { status: 500 }
+      );
+    }
     const orders = await db.collection("orders").find({}).toArray();
     
     // Fetch product details for each item in each order
     const ordersWithProductDetails = await Promise.all(
       orders.map(async (order) => {
         const itemsWithProductDetails = await Promise.all(
-          order.items.map(async (item) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          order.items.map(async (item: { productId: any; }) => {
             const product = await db.collection("products").findOne({ 
               _id: item.productId 
             });

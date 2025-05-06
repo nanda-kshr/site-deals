@@ -44,6 +44,7 @@ export default function CheckoutPage() {
   const [otp, setOtp] = useState("");
   
   // Checkout state
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [checkoutItems, setCheckoutItems] = useState<Array<any>>([]);
   const [imageUrls, setImageUrls] = useState<{ [key: string]: string }>({});
   const [imageLoading, setImageLoading] = useState<{ [key: string]: boolean }>({});
@@ -433,7 +434,7 @@ export default function CheckoutPage() {
     return (
       <div className="space-y-4">
         <h3 className="text-xl font-bold text-black">Verify OTP</h3>
-        <p className="text-sm text-black/60">We've sent a verification code to {formData.email}</p>
+        <p className="text-sm text-black/60">We&apos;ve sent a verification code to {formData.email}</p>
         <Input
           type="text"
           placeholder="Enter OTP"

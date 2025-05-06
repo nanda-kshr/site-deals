@@ -766,7 +766,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       );
 
       setError(null);
-    } catch (err) {
+    } catch {
       setError("Failed to add item to cart. Please try again.");
     }
   };
