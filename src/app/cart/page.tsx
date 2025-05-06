@@ -24,7 +24,7 @@ export default function CartPage() {
 
   const totalPrice = cartState?.totalPrice || 0;
   const adjustedTotalPrice = cartState?.adjustedTotalPrice || 0;
-  
+   
 
   useEffect(() => {
     // Wait for hydration to complete
