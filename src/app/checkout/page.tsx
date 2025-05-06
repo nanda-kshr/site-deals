@@ -166,7 +166,7 @@ export default function CheckoutPage() {
 
     try {
       const cashfree = await load({
-        mode: "sandbox", // Change to "production" for live
+        mode: "production", // Change to "production" for live
       });
 
       cashfree.checkout({

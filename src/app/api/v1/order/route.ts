@@ -119,7 +119,7 @@ export async function POST(request: Request) {
     };
 
     const cashfreeResponse = await fetch(
-      `https://${process.env.CASHFREE_ENVIRONMENT || 'sandbox'}.cashfree.com/pg/orders`,
+      `https://api.cashfree.com/pg/orders`,
       cashfreeOptions
     );
 
@@ -131,7 +131,9 @@ export async function POST(request: Request) {
     }
 
     const paymentSessionId = cashfreeData.payment_session_id;
-
+    console.log("payment session id below");
+    console.log(paymentSessionId);
+    console.log("payment session id above");
     return NextResponse.json(
       {
         orderId,
