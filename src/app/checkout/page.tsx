@@ -21,39 +21,139 @@ import { RootState } from "@/lib/store";
 import axios from "axios";
 import { getimage } from "@/lib/constants";
 
+interface FormData {
+  name: string;
+  phone: string;
+  address: string;
+  email: string;
+}
+
 export default function CheckoutPage() {
   const searchParams = useSearchParams();
   const cartState = useAppSelector((state: RootState) => state.carts);
-  const items = cartState?.items || [];
   const [step, setStep] = useState<"contact" | "email" | "otp">("contact");
-  const [name, setName] = useState("");
+  
+  // Form state
+  const [formData, setFormData] = useState<FormData>({
+    name: "",
+    phone: "",
+    address: "",
+    email: "",
+  });
   const [countryCode, setCountryCode] = useState("+91");
-  const [phone, setPhone] = useState("");
-  const [imageUrls, setImageUrls] = useState<{[key: string]: string}>({});
-  const [imageLoading, setImageLoading] = useState<{[key: string]: boolean}>({});
-  const [imageError, setImageError] = useState<{[key: string]: boolean}>({});
-  const [address, setAddress] = useState("");
-  const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
+  
+  // Checkout state
+  const [checkoutItems, setCheckoutItems] = useState<Array<any>>([]);
+  const [imageUrls, setImageUrls] = useState<{ [key: string]: string }>({});
+  const [imageLoading, setImageLoading] = useState<{ [key: string]: boolean }>({});
+  const [imageError, setImageError] = useState<{ [key: string]: boolean }>({});
   const [orderId, setOrderId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  // Store paymentSessionId in state to use across steps
   const [paymentSessionId, setPaymentSessionId] = useState<string>("");
-  const [checkoutItems, setCheckoutItems] = useState<
-    Array<{
-      id: string;
-      title: string;
-      price: number;
-      discount: number;
-      quantity: number;
-      variant?: string;
-      size?: string;
-      fileId?: string;
-    }>
-  >([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
+  // Modified useEffect to properly handle cart items
+  useEffect(() => {
+    try {
+      const itemIds = searchParams.get("itemIds")?.split(",") || [];
+      if (!itemIds.length) {
+        setLoadError("No items found in checkout. Please add items to your cart first.");
+        return;
+      }
 
+      // Debug log to see what we're working with
+      console.log('Cart state items:', cartState.items);
+      console.log('Item IDs from URL:', itemIds);
+
+      const filteredItems = cartState.items.filter((item) => {
+        const itemUniqueId = `${item.id}_${item.size || 'default'}_${item.color || 'default'}`;
+        const isMatch = itemIds.includes(itemUniqueId);
+        console.log('Checking item:', {
+          itemId: item.id,
+          size: item.size,
+          color: item.color,
+          uniqueId: itemUniqueId,
+          isMatch
+        });
+        return isMatch;
+      });
+
+      if (!filteredItems.length) {
+        setLoadError("Could not find the selected items. They may have been removed from your cart.");
+        return;
+      }
+
+      console.log('Filtered items for checkout:', filteredItems);
+      setCheckoutItems(filteredItems);
+      setLoadError(null);
+    } catch (error) {
+      console.error('Error loading checkout items:', error);
+      setLoadError("An error occurred while loading your checkout items. Please try again.");
+    }
+  }, [searchParams, cartState.items]);
+
+  // Handle image loading
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchImageData = async (fileId: string) => {
+      if (!fileId || imageUrls[fileId]) return;
+
+      try {
+        setImageLoading((prev) => ({ ...prev, [fileId]: true }));
+        setImageError((prev) => ({ ...prev, [fileId]: false }));
+
+        const response = await axios.post(
+          getimage,
+          { file_id: fileId },
+          { responseType: "blob" }
+        );
+
+        if (!isMounted) return;
+
+        const url = URL.createObjectURL(response.data);
+        setImageUrls((prev) => ({ ...prev, [fileId]: url }));
+        setImageLoading((prev) => ({ ...prev, [fileId]: false }));
+      } catch (error) {
+        if (!isMounted) return;
+        console.error(`Failed to load image for fileId ${fileId}:`, error);
+        setImageLoading((prev) => ({ ...prev, [fileId]: false }));
+        setImageError((prev) => ({ ...prev, [fileId]: true }));
+      }
+    };
+
+    checkoutItems.forEach((item) => {
+      if (item.fileId) {
+        fetchImageData(item.fileId);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      Object.values(imageUrls).forEach((url) => {
+        if (url) URL.revokeObjectURL(url);
+      });
+    };
+  }, [checkoutItems]);
+
+  // Validate form data
+  const validateForm = (): boolean => {
+    if (!formData.name.trim()) {
+      setError("Please enter your name");
+      return false;
+    }
+    if (!formData.phone.trim()) {
+      setError("Please enter your phone number");
+      return false;
+    }
+    if (!formData.address.trim()) {
+      setError("Please enter your address");
+      return false;
+    }
+    return true;
+  };
 
   // Initialize Cashfree payment
   const initiatePayment = async (sessionId: string) => {
@@ -65,124 +165,72 @@ export default function CheckoutPage() {
 
     try {
       const cashfree = await load({
-        mode: "sandbox",
+        mode: "sandbox", // Change to "production" for live
       });
-      
-      const checkoutOptions = {
+
+      cashfree.checkout({
         paymentSessionId: sessionId,
         redirectTarget: "_self",
-      };
-      
-      cashfree.checkout(checkoutOptions);
+      });
     } catch (error) {
       console.error("Payment initiation failed:", error);
       setError("Payment initiation failed. Please try again.");
     }
   };
 
-
-  useEffect(() => {
-    const itemIds = searchParams.get("itemIds")?.split(",") || [];
-    const filteredItems = items.filter((item) => itemIds.includes(item.id));
-    
-    if (filteredItems.length > 0) {
-      setCheckoutItems(
-        filteredItems.map((item) => ({
-          id: item.id,
-          title: item.title,
-          price: item.price,
-          discount: item.discount || 0,
-          quantity: item.quantity,
-          fileId: item.fileId,
-        }))
-      );
-    } else if (itemIds.length > 0 && items.length > 0) {
-      console.warn("No matching items found for the provided itemIds");
-    }
-  }, [searchParams, items]);
-
-  useEffect(() => {
-    const fetchImageData = async (fileId: string) => {
-      try {
-        setImageLoading(prev => ({ ...prev, [fileId]: true }));
-        setImageError(prev => ({ ...prev, [fileId]: false }));
-
-        const response = await axios.post(
-          getimage,
-          {
-            file_id: fileId,
-          },
-          {
-            responseType: "blob",
-          }
-        );
-        const url = URL.createObjectURL(response.data);
-        setImageUrls(prev => ({ ...prev, [fileId]: url }));
-        setImageLoading(prev => ({ ...prev, [fileId]: false }));
-      } catch (error) {
-        console.error(`Failed to load image for fileId ${fileId}:`, error);
-        setImageLoading(prev => ({ ...prev, [fileId]: false }));
-        setImageError(prev => ({ ...prev, [fileId]: true }));
-      }
-    };
-
-    checkoutItems.forEach(item => {
-      if (item.fileId && !imageUrls[item.fileId]) {
-        fetchImageData(item.fileId);
-      }
-    });
-    return () => {
-      Object.values(imageUrls).forEach(url => {
-        if (url) {
-          URL.revokeObjectURL(url);
-        }
-      });
-    };
-  }, [checkoutItems, imageUrls]);
-
   const handleCheckout = async () => {
-    if (!name || !phone || !address) {
-      setError("Please complete all fields.");
-      return;
-    }
+    if (!validateForm()) return;
+    
     setError(null);
     setIsLoading(true);
-    
+
     try {
-      // We'll only create one order for all items
-      // This will simplify the payment flow
-      const orderItems = checkoutItems.map(item => ({
-        productId: item.id,
-        quantity: item.quantity,
-        variant: item.variant,
-        size: item.size
-      }));
-      
+      // Validate checkout items
+      if (!checkoutItems || checkoutItems.length === 0) {
+        throw new Error("No items found in checkout. Please add items to your cart first.");
+      }
+
+      const orderItems = checkoutItems.map((item) => {
+        // Handle both MongoDB ObjectId and string IDs
+        const productId = item._id?.$oid || item.id;
+        if (!productId) {
+          throw new Error("Invalid product ID found in cart items.");
+        }
+        return {
+          productId,
+          quantity: item.quantity || 1,
+          size: item.size || '',
+          color: item.color || '',
+        };
+      });
+
+      console.log('Sending order items:', orderItems); // Debug log
+
       const response = await fetch("/api/v1/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name,
-          email: email || "nandakishorep212@gmail.com", // Use provided email if available
-          phone: `${countryCode}${phone}`,
-          address,
-          items: orderItems, // Send all items in a single order
+          name: formData.name,
+          email: formData.email || undefined,
+          phone: `${countryCode}${formData.phone}`,
+          address: formData.address,
+          items: orderItems,
         }),
       });
-      
+
       if (!response.ok) {
-        throw new Error("Failed to place order");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to place order");
       }
-      
+
       const data = await response.json();
 
       if (data.orderId && data.paymentSessionId) {
         setOrderId(data.orderId);
         setPaymentSessionId(data.paymentSessionId);
-
-        // If email is already provided, skip to OTP step
-        if (email) {
-          await handleSendOtp(data.orderId, email);
+        
+        if (formData.email) {
+          await handleSendOtp(data.orderId, formData.email);
         } else {
           setStep("email");
         }
@@ -190,47 +238,41 @@ export default function CheckoutPage() {
         throw new Error("Invalid response from server");
       }
     } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to place order. Please try again.");
       console.error("Order creation failed:", err);
-      setError("Failed to place order. Try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSendOtp = async (orderIdToUse = orderId, emailToUse = email) => {
+  const handleSendOtp = async (orderIdToUse = orderId, emailToUse = formData.email) => {
     if (!emailToUse) {
       setError("Please enter your email.");
       return;
     }
-    
+
     if (!orderIdToUse) {
       setError("Order ID is missing. Please try again.");
       return;
     }
-    
+
     setError(null);
     setIsLoading(true);
-    
-    try {
 
+    try {
       const response = await fetch("/api/v1/mail/send-confirmation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           orderId: orderIdToUse,
           email: emailToUse,
         }),
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to send OTP.");
       }
-      
-      // Update email in state if using a different email
-      if (emailToUse !== email) {
-        setEmail(emailToUse);
-      }
-      
+
       setStep("otp");
     } catch (err) {
       console.error("OTP sending failed:", err);
@@ -245,43 +287,38 @@ export default function CheckoutPage() {
       setError("Please enter the OTP.");
       return;
     }
-    
+
     if (!orderId) {
       setError("Order ID is missing. Please try again.");
       return;
     }
-    
-    if (!email) {
+
+    if (!formData.email) {
       setError("Email is missing. Please try again.");
       return;
     }
-    
+
     setError(null);
     setIsLoading(true);
-    
-    try {
 
+    try {
       const response = await fetch("/api/v1/mail/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          email, 
+        body: JSON.stringify({
+          email: formData.email,
           otp,
           orderId,
         }),
       });
-      
+
       if (!response.ok) {
         throw new Error("Invalid OTP.");
       }
-      
-      // Check if we have a payment session ID
 
       if (paymentSessionId) {
         await initiatePayment(paymentSessionId);
       } else {
-        // If we don't have a payment session ID, try to fetch it again
-        console.error("Payment session ID is missing after OTP verification");
         setError("Payment information not found. Please try again.");
       }
     } catch (err) {
@@ -292,6 +329,16 @@ export default function CheckoutPage() {
     }
   };
 
+  const totalPrice = checkoutItems.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
+
+  const adjustedTotalPrice = checkoutItems.reduce(
+    (sum, item) => sum + item.price * (1 - (item.discount || 0) / 100) * item.quantity,
+    0
+  );
+
   const renderStep = () => {
     if (step === "contact") {
       return (
@@ -300,8 +347,8 @@ export default function CheckoutPage() {
           <Input
             type="text"
             placeholder="Full Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={formData.name}
+            onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
             className="border-black/20 text-black"
             required
           />
@@ -319,8 +366,8 @@ export default function CheckoutPage() {
             <Input
               type="tel"
               placeholder="Phone Number"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              value={formData.phone}
+              onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
               className="border-black/20 text-black"
               required
             />
@@ -328,16 +375,16 @@ export default function CheckoutPage() {
           <Input
             type="text"
             placeholder="Address"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
+            value={formData.address}
+            onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
             className="border-black/20 text-black"
             required
           />
           <Input
             type="email"
             placeholder="Email (Optional)"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={formData.email}
+            onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
             className="border-black/20 text-black"
           />
           {error && <p className="text-red-600 text-sm">{error}</p>}
@@ -350,15 +397,17 @@ export default function CheckoutPage() {
           </Button>
         </div>
       );
-    } else if (step === "email") {
+    }
+
+    if (step === "email") {
       return (
         <div className="space-y-4">
           <h3 className="text-xl font-bold text-black">Enter Your Email</h3>
           <Input
             type="email"
             placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={formData.email}
+            onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
             className="border-black/20 text-black"
             required
           />
@@ -379,61 +428,59 @@ export default function CheckoutPage() {
           </Button>
         </div>
       );
-    } else if (step === "otp") {
-      return (
-        <div className="space-y-4">
-          <h3 className="text-xl font-bold text-black">Verify OTP</h3>
-          <p className="text-sm text-black/60">
-            We&apos;ve sent a verification code to {email}
-          </p>
-          <Input
-            type="text"
-            placeholder="Enter OTP"
-            value={otp}
-            onChange={(e) => setOtp(e.target.value)}
-            className="border-black/20 text-black"
-            required
-          />
-          {error && <p className="text-red-600 text-sm">{error}</p>}
-          <Button
-            onClick={handleVerifyOtp}
-            disabled={isLoading}
-            className="bg-black text-white rounded-full w-full py-3"
-          >
-            {isLoading ? "Verifying..." : "Verify & Pay"}
-          </Button>
-          <Button
-            onClick={() => setStep("email")}
-            variant="outline"
-            className="rounded-full w-full py-3 border-black/20"
-          >
-            Back
-          </Button>
-        </div>
-      );
     }
-    return null;
+
+    return (
+      <div className="space-y-4">
+        <h3 className="text-xl font-bold text-black">Verify OTP</h3>
+        <p className="text-sm text-black/60">We've sent a verification code to {formData.email}</p>
+        <Input
+          type="text"
+          placeholder="Enter OTP"
+          value={otp}
+          onChange={(e) => setOtp(e.target.value)}
+          className="border-black/20 text-black"
+          required
+        />
+        {error && <p className="text-red-600 text-sm">{error}</p>}
+        <Button
+          onClick={handleVerifyOtp}
+          disabled={isLoading}
+          className="bg-black text-white rounded-full w-full py-3"
+        >
+          {isLoading ? "Verifying..." : "Verify & Pay"}
+        </Button>
+        <Button
+          onClick={() => setStep("email")}
+          variant="outline"
+          className="rounded-full w-full py-3 border-black/20"
+        >
+          Back
+        </Button>
+      </div>
+    );
   };
 
+  if (loadError) {
+    return (
+      <main className="pb-20 bg-white">
+        <div className="max-w-frame mx-[var(--content-margin)] px-4 xl:px-0">
+          <div className="text-center py-8">
+            <p className="text-red-600 mb-4">{loadError}</p>
+            <Button asChild className="mt-4 rounded-full bg-black text-white">
+              <Link href="/cart">Return to Cart</Link>
+            </Button>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
-  const totalPrice = checkoutItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
-  
-  const adjustedTotalPrice = checkoutItems.reduce(
-    (sum, item) => sum + item.price * (1 - (item.discount || 0) / 100) * item.quantity,
-    0
-  );
-  
   return (
     <main className="pb-20 bg-white">
       <div className="max-w-frame mx-[var(--content-margin)] px-4 xl:px-0">
         <h2
-          className={cn(
-            integralCF.className,
-            "font-bold text-[32px] md:text-[40px] text-black uppercase mb-5 md:mb-6"
-          )}
+          className={cn(integralCF.className, "font-bold text-[32px] md:text-[40px] text-black uppercase mb-5 md:mb-6")}
         >
           Checkout
         </h2>
@@ -450,42 +497,41 @@ export default function CheckoutPage() {
               {renderStep()}
             </div>
             <div className="w-full lg:w-1/2 p-5 rounded-[20px] border border-black/10">
-              <h3 className="text-xl md:text-2xl font-bold text-black mb-4">
-                Order Summary
-              </h3>
+              <h3 className="text-xl md:text-2xl font-bold text-black mb-4">Order Summary</h3>
               <div className="space-y-4">
                 {checkoutItems.map((item) => (
-                  <div key={item.id} className="flex items-center space-x-4">
+                  <div key={`${item.id}_${item.size}_${item.color}`} className="flex items-center space-x-4">
                     <div className="relative w-16 h-16 bg-[#F0EEED] rounded-md">
-                    {item.fileId && (
-                    <>
-                      {imageLoading[item.fileId] ? (
-                        <div className="animate-pulse bg-gray-200 w-full h-full rounded-md" />
-                      ) : imageError[item.fileId] ? (
-                        <div className="flex items-center justify-center h-full text-sm text-red-500">
-                          Image unavailable
-                        </div>
-                      ) : (
-                        <Image
-                          src={imageUrls[item.fileId] || ""}
-                          fill
-                          alt={item.title}
-                          className="object-contain p-2"
-                          sizes="64px"
-                        />
+                      {item.fileId && (
+                        <>
+                          {imageLoading[item.fileId] ? (
+                            <div className="animate-pulse bg-gray-200 w-full h-full rounded-md" />
+                          ) : imageError[item.fileId] ? (
+                            <div className="flex items-center justify-center h-full text-sm text-red-500">
+                              Image unavailable
+                            </div>
+                          ) : imageUrls[item.fileId] ? (
+                            <Image
+                              src={imageUrls[item.fileId]}
+                              alt={item.title}
+                              fill
+                              className="object-contain p-2"
+                              sizes="64px"
+                            />
+                          ) : null}
+                        </>
                       )}
-                    </>
-                  )}
                     </div>
                     <div className="flex-1">
-                      <h4 className="text-lg font-medium text-black truncate">
-                        {item.title}
-                      </h4>
+                      <h4 className="text-lg font-medium text-black truncate">{item.title}</h4>
                       <p className="text-sm text-black/60">
-                        Quantity: {item.quantity}
+                        {item.size && `Size: ${item.size}`}
+                        {item.size && item.color && " | "}
+                        {item.color && `Color: ${item.color}`}
                       </p>
+                      <p className="text-sm text-black/60">Quantity: {item.quantity}</p>
                       <p className="text-sm font-semibold">
-                        ₹{((item.price * (1 - item.discount / 100)) * item.quantity).toFixed(2)}
+                        ₹{((item.price * (1 - (item.discount || 0) / 100)) * item.quantity).toFixed(2)}
                       </p>
                     </div>
                   </div>
@@ -494,13 +540,11 @@ export default function CheckoutPage() {
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-black/60">Subtotal</span>
-                    <span className="font-bold">₹{(totalPrice).toFixed(2)}</span>
+                    <span className="font-bold">₹{totalPrice.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-black/60">Discount</span>
-                    <span className="font-bold text-red-600">
-                      -₹{(totalPrice - adjustedTotalPrice).toFixed(2)}
-                    </span>
+                    <span className="font-bold text-red-600">-₹{(totalPrice - adjustedTotalPrice).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-black/60">Delivery Fee</span>
@@ -509,9 +553,7 @@ export default function CheckoutPage() {
                   <hr className="border-t-black/10" />
                   <div className="flex justify-between">
                     <span className="text-black">Total</span>
-                    <span className="text-xl font-bold">
-                      ₹{adjustedTotalPrice.toFixed(2)}
-                    </span>
+                    <span className="text-xl font-bold">₹{adjustedTotalPrice.toFixed(2)}</span>
                   </div>
                 </div>
               </div>

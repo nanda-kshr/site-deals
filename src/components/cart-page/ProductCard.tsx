@@ -4,7 +4,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useAppDispatch } from "@/lib/hooks/redux";
 import { removeFromCart, updateQuantity } from "@/lib/features/carts/cartsSlice";
-import { Trash2 } from "lucide-react"; // Import an icon
+import { Trash2 } from "lucide-react";
 import axios from "axios";
 import { getimage } from "@/lib/constants";
 import { useEffect, useState } from "react";
@@ -17,6 +17,19 @@ interface CartProduct {
   discount: number;
   rating: number;
   quantity: number;
+  size: string;
+  color: string;
+  description: string;
+  material: string;
+  packageSize?: string;
+  category?: string;
+  gallery: string[];
+  attributes: {
+    size?: Array<{ value: string; price?: number; stock?: number }>;
+    color?: Array<{ value: string; price?: number; stock?: number }>;
+  };
+  createdAt: string;
+  updatedAt?: string;
 }
 
 interface ProductCardProps {
@@ -30,6 +43,7 @@ const ProductCard = ({ data }: ProductCardProps) => {
   const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
     setImageLoading(true);
     setImageError(false);
 
@@ -37,17 +51,16 @@ const ProductCard = ({ data }: ProductCardProps) => {
       try {
         const response = await axios.post(
           getimage,
-          {
-            file_id: data.fileId,
-          },
-          {
-            responseType: "blob",
-          }
+          { file_id: data.fileId },
+          { responseType: "blob" }
         );
+        if (!isMounted) return;
+
         const url = URL.createObjectURL(response.data);
         setImageUrl(url);
         setImageLoading(false);
       } catch (error) {
+        if (!isMounted) return;
         console.error(`Failed to load image for product ${data.id}:`, error);
         setImageLoading(false);
         setImageError(true);
@@ -59,29 +72,39 @@ const ProductCard = ({ data }: ProductCardProps) => {
     }
 
     return () => {
+      isMounted = false;
       if (imageUrl) {
         URL.revokeObjectURL(imageUrl);
       }
     };
-  }, [data.fileId]);
+  }, [data.fileId, data.id]);
 
   const handleQuantityChange = (delta: number) => {
     const newQuantity = data.quantity + delta;
 
-    // If quantity would become zero, remove item completely
     if (newQuantity === 0) {
-      dispatch(removeFromCart(data.id));
+      dispatch(
+        removeFromCart({ id: data.id, size: data.size, color: data.color })
+      );
     } else if (newQuantity > 0) {
-      dispatch(updateQuantity({ id: data.id, quantity: newQuantity }));
+      dispatch(
+        updateQuantity({
+          id: data.id,
+          size: data.size,
+          color: data.color,
+          quantity: newQuantity,
+        })
+      );
     }
   };
 
   const handleRemove = () => {
-    // Optional: add confirmation
     if (
       window.confirm("Are you sure you want to remove this item from your cart?")
     ) {
-      dispatch(removeFromCart(data.id));
+      dispatch(
+        removeFromCart({ id: data.id, size: data.size, color: data.color })
+      );
     }
   };
 
@@ -91,12 +114,12 @@ const ProductCard = ({ data }: ProductCardProps) => {
       : data.price;
 
   return (
-    <div className="flex items-center space-x-4">
-      <div className="relative w-20 h-20 bg-[#F0EEED] rounded-md">
+    <div className="flex items-start space-x-4 p-4 border-b border-gray-200">
+      <div className="relative w-24 h-24 bg-[#F0EEED] rounded-md flex-shrink-0">
         {imageLoading ? (
           <div className="animate-pulse bg-gray-200 w-full h-full rounded-md" />
         ) : imageError ? (
-          <div className="flex items-center justify-center h-full text-sm text-red-500">
+          <div className="flex items-center justify-center h-full text-sm text-red-500 bg-gray-100 rounded-md">
             Image unavailable
           </div>
         ) : (
@@ -105,38 +128,60 @@ const ProductCard = ({ data }: ProductCardProps) => {
             alt={`product_image_${data.title}`}
             fill
             className="object-contain p-2"
-            sizes="80px"
+            sizes="96px"
             priority
           />
         )}
       </div>
       <div className="flex-1">
         <h3 className="text-lg font-medium text-black truncate">{data.title}</h3>
-        <div className="flex items-center gap-2">
+        <div className="text-sm text-gray-600 space-y-1 mt-1">
+          {data.size && <p>Size: {data.size}</p>}
+          {data.color && <p>Color: {data.color}</p>}
+          {data.material && <p>Material: {data.material}</p>}
+          {data.rating && (
+            <p>
+              Rating: {data.rating.toFixed(1)} / 5
+              <span className="ml-1">
+                {[...Array(5)].map((_, i) => (
+                  <span
+                    key={`rating_${data.id}_${i}`}
+                    className={i < Math.floor(data.rating) ? "text-yellow-400" : "text-gray-300"}
+                  >
+                    ★
+                  </span>
+                ))}
+              </span>
+            </p>
+          )}
+        </div>
+        <div className="flex items-center gap-2 mt-3">
           <span className="text-base font-bold text-black">
             ₹{discountedPrice.toFixed(2)}
           </span>
           {data.discount > 0 && (
-            <span className="text-sm text-black/40 line-through">
+            <span className="text-sm text-gray-500 line-through">
               ₹{data.price.toFixed(2)}
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2 mt-2">
+        <div className="flex items-center gap-2 mt-3">
           <Button
             variant="outline"
             size="sm"
             onClick={() => handleQuantityChange(-1)}
-            className="border-black/20"
+            className="border-gray-300 hover:bg-gray-100"
+            aria-label="Decrease quantity"
           >
             -
           </Button>
-          <span className="text-black">{data.quantity}</span>
+          <span className="text-black w-8 text-center">{data.quantity}</span>
           <Button
             variant="outline"
             size="sm"
             onClick={() => handleQuantityChange(1)}
-            className="border-black/20"
+            className="border-gray-300 hover:bg-gray-100"
+            aria-label="Increase quantity"
           >
             +
           </Button>
@@ -147,6 +192,7 @@ const ProductCard = ({ data }: ProductCardProps) => {
         size="sm"
         onClick={handleRemove}
         className="text-red-600 hover:text-red-800 flex items-center gap-1"
+        aria-label={`Remove ${data.title} from cart`}
       >
         <Trash2 size={16} />
         Remove

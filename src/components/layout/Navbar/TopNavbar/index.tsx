@@ -14,14 +14,21 @@ import Image from "next/image";
 import ResTopNavbar from "./ResTopNavbar";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/lib/hooks/redux";
-import { Menu, Search } from "lucide-react";
+import { Menu, Search, Truck } from "lucide-react";
 
 const data: NavMenu = [
   {
-    id: 2,
+    id: 1,
     type: "MenuItem",
     label: "On Sale",
     url: "/shop",
+    children: [],
+  },
+  {
+    id: 2,
+    type: "MenuItem",
+    label: "Track Orders",
+    url: "/order",
     children: [],
   },
 ];
@@ -147,8 +154,16 @@ const TopNavbar = () => {
           >
             <Search size={22} />
           </button>
-          
 
+          {/* Track Order Button */}
+          <Link 
+            href="/order"
+            className="hidden md:flex items-center gap-2 mr-4 text-black hover:text-black/80 transition-colors"
+          >
+            <Truck size={18} />
+            <span className="text-sm font-medium">Track Order</span>
+          </Link>
+          
           <CartBtn />
         </div>
       </div>
@@ -157,7 +172,7 @@ const TopNavbar = () => {
       {isSearchOpen && (
         <div className="md:hidden px-4 pb-4 bg-white border-t border-black/10">
           <form onSubmit={handleSearch} className="w-full relative">
-            <input
+            <input 
               type="text"
               placeholder="Search products..."
               value={searchQuery}

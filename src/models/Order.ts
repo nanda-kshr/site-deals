@@ -12,8 +12,14 @@ const OrderItemSchema = new mongoose.Schema({
     required: true,
     min: 1
   },
-  variant: String,
-  size: String
+  size: {
+    type: String,
+    required: true
+  },
+  color: {
+    type: String,
+    required: true
+  }
 });
 
 // Define the main Order schema

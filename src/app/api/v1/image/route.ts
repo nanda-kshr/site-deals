@@ -8,7 +8,6 @@ export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
         const fileId = body.file_id;
-        
         // Validate required parameters
         if (!fileId) {
             return NextResponse.json({ error: 'Missing file_id in request body' }, { status: 400 });

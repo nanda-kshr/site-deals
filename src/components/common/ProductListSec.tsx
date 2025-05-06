@@ -36,6 +36,9 @@ const ProductListSec = ({
     discountPercentage: 0,
     rating: 0,
     createdAt: "",
+    designTypes: [],
+    stock: undefined,
+    category: undefined
   };
 
   const displayedProducts = [...data.slice(0, 4), ...Array(4 - Math.min(data.length, 4)).fill(fallbackProduct)];

@@ -4,26 +4,28 @@ export type Product = {
   };
   id?: string;
   name: string;
+  fileId: string;
   gallery: string[];
   price: number;
   discountPercentage: number;
   rating: number;
-  attributes?: {
+  attributes: {
     size: Array<{
       value: string;
-      fileId: string;
       price: number;
+      stock: number;
     }>;
     color: Array<{
       value: string;
-      fileId: string;
       price: number;
+      stock: number;
     }>;
   };
   description?: string;
+  material?: string;
+  packageSize?: number;
   createdAt: string;
   updatedAt?: string;
-  fileId: string;
 };
 
 export interface IProduct {

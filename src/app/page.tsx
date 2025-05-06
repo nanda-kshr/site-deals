@@ -26,15 +26,6 @@ export default function Home() {
         if (!bestSellersResponse.ok) setError("Failed to fetch best sellers");
         const bestSellersData = await bestSellersResponse.json();
 
-        // interface ApiProduct {
-        //   _id?: string;
-        //   name: string;
-        //   fileId: string;
-        //   price: number;
-        //   discount?: number;
-        //   rating: number;
-        // }
-
         const mapToProduct = (item: Product): Product => {
           const product: Product = {
             _id: item._id,
@@ -45,6 +36,9 @@ export default function Home() {
             rating: item.rating,
             fileId: item.fileId,
             createdAt: new Date().toISOString(),
+            designTypes: [],
+            stock: undefined,
+            category: undefined
           };
           
           return product;

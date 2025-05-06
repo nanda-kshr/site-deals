@@ -1,29 +1,47 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { integralCF } from "@/styles/fonts";
-import { Package, Truck, Check, AlertCircle, Clock, MapPin, User, Mail, Phone, Box, CreditCard, Calendar, ShoppingBag } from "lucide-react";
-import { trackorder } from "@/lib/constants";
+import { 
+  Package, 
+  Truck, 
+  Check, 
+  AlertCircle, 
+  Clock, 
+  MapPin, 
+  User, 
+  Mail, 
+  Phone, 
+  Box, 
+  CreditCard, 
+  Calendar, 
+  ShoppingBag,
+  Tag,
+  Palette
+} from "lucide-react";
+import { trackorder, getimage } from "@/lib/constants";
+import axios from "axios";
 
-// Updated interface to match your MongoDB document structure
+// Updated interface to match your actual data structure
 interface OrderItem {
-  productId: {
-    $oid: string;
-  };
+  productId: string;
   quantity: number;
-  _id: {
-    $oid: string;
+  size: string;
+  color: string;
+  _id: string;
+  productDetails?: {
+    name: string;
+    price: number;
+    fileId?: string;
   };
 }
 
 interface OrderDetails {
-  _id: {
-    $oid: string;
-  };
+  _id: string;
   name: string;
   email: string;
   phone: string;
@@ -32,13 +50,32 @@ interface OrderDetails {
   totalAmount: number;
   status: string;
   paymentStatus: string;
-  createdAt: {
-    $date: string;
-  };
-  updatedAt: {
-    $date: string;
-  };
+  createdAt: string;
 }
+
+// Add image URL cache
+const imageUrlCache = new Map<string, string>();
+
+// Function to get or create image URL
+const getImageUrl = async (fileId: string): Promise<string> => {
+  if (imageUrlCache.has(fileId)) {
+    return imageUrlCache.get(fileId)!;
+  }
+
+  try {
+    const response = await axios.post(
+      getimage,
+      { file_id: fileId },
+      { responseType: "blob" }
+    );
+    const url = URL.createObjectURL(response.data);
+    imageUrlCache.set(fileId, url);
+    return url;
+  } catch (error) {
+    console.error(`Failed to load image for fileId ${fileId}:`, error);
+    return "";
+  }
+};
 
 export default function OrderPage() {
   const [orderId, setOrderId] = useState("");
@@ -46,6 +83,7 @@ export default function OrderPage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [searchAnimation, setSearchAnimation] = useState(false);
+  const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
 
   const handleTrackOrder = async () => {
     if (!orderId) {
@@ -95,23 +133,60 @@ export default function OrderPage() {
   const getStatusStage = () => {
     if (!orderDetails) return 0;
     
-    switch(orderDetails.status.toLowerCase()) {
-      case 'pending': return 1;
-      case 'processing': return 2;
-      case 'shipped': return 3;
-      case 'delivered': return 4;
-      default: return 1;
+    switch(orderDetails.status) {
+      case "delivered": return 4;
+      case "shipped": return 3;
+      case "processing": return 2;
+      case "pending": return 1;
+      default: return 0;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "delivered": return "text-green-600";
+      case "shipped": return "text-blue-600";
+      case "processing": return "text-yellow-600";
+      case "pending": return "text-orange-600";
+      default: return "text-gray-600";
     }
   };
 
   const getPaymentStatusColor = (status: string) => {
-    switch(status.toLowerCase()) {
-      case 'paid': return 'text-green-600';
-      case 'pending': return 'text-amber-600';
-      case 'failed': return 'text-red-600';
-      default: return 'text-gray-600';
+    switch (status.toLowerCase()) {
+      case "completed": return "text-green-600";
+      case "pending": return "text-yellow-600";
+      case "failed": return "text-red-600";
+      default: return "text-gray-600";
     }
   };
+
+  // Load all images when order details are fetched
+  useEffect(() => {
+    if (orderDetails) {
+      const loadImages = async () => {
+        const urls: Record<string, string> = {};
+        for (const item of orderDetails.items) {
+          if (item.productDetails?.fileId) {
+            const url = await getImageUrl(item.productDetails.fileId);
+            if (url) {
+              urls[item.productDetails.fileId] = url;
+            }
+          }
+        }
+        setImageUrls(urls);
+      };
+      loadImages();
+    }
+
+    // Cleanup function to revoke URLs when component unmounts
+    return () => {
+      Object.values(imageUrls).forEach(url => {
+        URL.revokeObjectURL(url);
+      });
+      setImageUrls({});
+    };
+  }, [orderDetails]);
 
   return (
     <main className="min-h-screen bg-[#FAFAFA] py-12">
@@ -217,23 +292,23 @@ export default function OrderPage() {
               {/* Order Summary Header */}
               <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center">
                 <div>
-                  <h3 className="text-xl font-bold text-black">Order #{orderDetails._id.$oid}</h3>
+                  <h3 className="text-xl font-bold text-black">Order #{orderDetails._id}</h3>
                   <div className="flex items-center gap-2 mt-1">
                     <Calendar size={16} className="text-gray-500" />
                     <p className="text-sm text-gray-600">
-                      Placed on {formatDate(orderDetails.createdAt.$date)}
+                      Placed on {formatDate(orderDetails.createdAt)}
                     </p>
                   </div>
                 </div>
                 <div className="mt-4 md:mt-0 flex gap-2">
                   <div className="px-4 py-1 rounded-full bg-gray-100 flex items-center">
                     <span className="text-sm font-medium">
-                      Status: <span className="text-amber-600">{orderDetails.status.charAt(0).toUpperCase() + orderDetails.status.slice(1)}</span>
+                      Status: <span className={getStatusColor(orderDetails.status)}>{orderDetails.status.charAt(0).toUpperCase() + orderDetails.status.slice(1)}</span>
                     </span>
                   </div>
                   <div className={cn(
                     "px-4 py-1 rounded-full flex items-center",
-                    orderDetails.paymentStatus === "paid" ? "bg-green-50" : "bg-amber-50"
+                    orderDetails.paymentStatus === "completed" ? "bg-green-50" : "bg-amber-50"
                   )}>
                     <span className="text-sm font-medium">
                       Payment: <span className={getPaymentStatusColor(orderDetails.paymentStatus)}>
@@ -241,6 +316,13 @@ export default function OrderPage() {
                       </span>
                     </span>
                   </div>
+                  <Button
+                    onClick={() => window.location.href = '/order'}
+                    className="bg-black text-white rounded-full px-4 py-1 text-sm font-medium hover:bg-black/80 transition-colors flex items-center gap-2"
+                  >
+                    <Truck size={16} />
+                    Track Another Order
+                  </Button>
                 </div>
               </div>
 
@@ -346,7 +428,7 @@ export default function OrderPage() {
                       <div className="w-4 h-4 rounded-full bg-black mt-0.5 flex-shrink-0" />
                       <div>
                         <p className="text-sm text-gray-500">Order ID</p>
-                        <p className="font-medium font-mono">{orderDetails._id.$oid}</p>
+                        <p className="font-medium font-mono">{orderDetails._id}</p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
@@ -372,7 +454,7 @@ export default function OrderPage() {
                       <div className="w-4 h-4 rounded-full bg-black mt-0.5 flex-shrink-0" />
                       <div>
                         <p className="text-sm text-gray-500">Order Date</p>
-                        <p className="font-medium">{formatDate(orderDetails.createdAt.$date)}</p>
+                        <p className="font-medium">{formatDate(orderDetails.createdAt)}</p>
                       </div>
                     </div>
                   </div>
@@ -380,43 +462,93 @@ export default function OrderPage() {
               </div>
               
               {/* Order Items */}
-              <div className="mt-6 border border-gray-200 rounded-xl p-6 bg-white">
-                <h4 className="text-lg font-bold text-black mb-4 flex items-center">
-                  <ShoppingBag size={18} className="mr-2" />
-                  Order Items
-                </h4>
-                
+              <div className="mt-8">
+                <h4 className="text-lg font-semibold mb-4">Order Items</h4>
                 <div className="space-y-4">
-                  {orderDetails.items.map((item, index) => (
-                    <div key={index} className="border-b border-gray-100 pb-4 last:border-b-0 last:pb-0">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center mr-4">
-                            <Box size={20} className="text-gray-400" />
-                          </div>
+                  {orderDetails.items.map((item) => (
+                    <div 
+                      key={`order-${orderDetails._id}-item-${item._id}`}
+                      className="flex items-start gap-4 p-4 bg-gray-50 rounded-xl"
+                    >
+                      <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+                        {item.productDetails?.fileId && imageUrls[item.productDetails.fileId] ? (
+                          <img
+                            src={imageUrls[item.productDetails.fileId]}
+                            alt={item.productDetails.name}
+                            className="w-full h-full object-contain"
+                          />
+                        ) : (
+                          <ShoppingBag size={24} className="text-gray-400" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start">
                           <div>
-                            <p className="font-medium">Product ID: {item.productId.$oid}</p>
-                            <p className="text-sm text-gray-500">Quantity: {item.quantity}</p>
+                            <h5 className="font-medium text-black">
+                              {item.productDetails?.name || `Product ${item.productId.slice(-6)}`}
+                            </h5>
+                            <p className="text-sm text-gray-600">
+                              Product ID: {item.productId.slice(-6)}
+                            </p>
                           </div>
+                          <div className="text-right">
+                            <p className="font-medium">Quantity: {item.quantity}</p>
+                            {item.productDetails?.price && (
+                              <p className="text-sm text-gray-600">
+                                ₹{item.productDetails.price.toFixed(2)}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="mt-2 flex gap-4">
+                          {item.size && (
+                            <div className="flex items-center gap-1 text-sm text-gray-600">
+                              <Tag size={14} />
+                              <span>Size: {item.size}</span>
+                            </div>
+                          )}
+                          {item.color && (
+                            <div className="flex items-center gap-1 text-sm text-gray-600">
+                              <Palette size={14} />
+                              <span>Color: {item.color}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
-              
-              {/* Help Box */}
-              <div className="mt-8 bg-gray-50 rounded-xl p-6 border border-gray-200">
-                <h4 className="text-lg font-bold text-black mb-2">Need Help?</h4>
-                <p className="text-gray-600 mb-4">
-                  If you have any questions about your order, please don&apos;t hesitate to contact our customer support team.
-                </p>
-                <Button
-                  variant="outline"
-                  className="border-black text-black hover:bg-black hover:text-white transition-colors"
-                >
-                  Contact Support
-                </Button>
+
+              {/* Order Summary */}
+              <div className="mt-8 p-6 bg-gray-50 rounded-xl">
+                <h4 className="text-lg font-semibold mb-4">Order Summary</h4>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Total Items</span>
+                    <span className="font-medium">{orderDetails.items.length} items</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Subtotal</span>
+                    <span className="font-medium">₹{orderDetails.totalAmount}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Status</span>
+                    <span className={`font-medium ${getStatusColor(orderDetails.status)}`}>
+                      {orderDetails.status.charAt(0).toUpperCase() + orderDetails.status.slice(1)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Payment Status</span>
+                    <span className={`font-medium ${getPaymentStatusColor(orderDetails.paymentStatus)}`}>
+                      {orderDetails.paymentStatus.charAt(0).toUpperCase() + orderDetails.paymentStatus.slice(1)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Order Date</span>
+                    <span className="font-medium">{formatDate(orderDetails.createdAt)}</span>
+                  </div>
+                </div>
               </div>
             </motion.div>
           )}

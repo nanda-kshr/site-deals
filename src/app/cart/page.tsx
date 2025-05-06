@@ -9,7 +9,7 @@ import { integralCF } from "@/styles/fonts";
 import { FaArrowRight } from "react-icons/fa6";
 import { MdOutlineLocalOffer } from "react-icons/md";
 import { TbBasketExclamation } from "react-icons/tb";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { RootState } from "@/lib/store";
 import { useAppSelector } from "@/lib/hooks/redux";
 import Link from "next/link";
@@ -17,21 +17,49 @@ import { useRouter } from "next/navigation";
 
 export default function CartPage() {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
 
   const cartState = useAppSelector((state: RootState) => state.carts);
   const items = cartState?.items || [];
 
   const totalPrice = cartState?.totalPrice || 0;
   const adjustedTotalPrice = cartState?.adjustedTotalPrice || 0;
+  
+
+  useEffect(() => {
+    // Wait for hydration to complete
+    setIsLoading(false);
+  }, []);
 
   const handleCheckout = () => {
     if (items.length === 0) {
       alert("Your cart is empty. Please add items before proceeding to checkout.");
       return;
     }
-    const itemIds = items.map((item) => item.id).join(",");
-    router.push(`/checkout?itemIds=${itemIds}`);
+
+    // Create unique IDs for each item including their variations
+    const itemIds = items.map((item) => 
+      `${item.id}_${item.size || 'default'}_${item.color || 'default'}`
+    );
+
+    console.log('Items being sent to checkout:', itemIds); // Debug
+
+    router.push(`/checkout?itemIds=${itemIds.join(",")}`);
   };
+
+  if (isLoading) {
+    return (
+      <main className="pb-20">
+        <div className="max-w-frame mx-[var(--content-margin)] px-4 xl:px-0">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+            <div className="h-32 bg-gray-200 rounded mb-4"></div>
+            <div className="h-32 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="pb-20">
@@ -50,7 +78,7 @@ export default function CartPage() {
             <div className="flex flex-col lg:flex-row space-y-5 lg:space-y-0 lg:space-x-5 items-start">
               <div className="w-full p-3.5 md:px-6 flex-col space-y-4 md:space-y-6 rounded-[20px] border border-black">
                 {items.map((product, idx, arr) => (
-                  <React.Fragment key={idx}>
+                  <React.Fragment key={`${product.id}_${product.size || 'default'}_${product.color || 'default'}`}>
                     <ProductCard data={product} />
                     {arr.length - 1 !== idx && <hr className="border-t-black" />}
                   </React.Fragment>
