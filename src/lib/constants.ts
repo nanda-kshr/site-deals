@@ -151,7 +151,7 @@ export const privacyPolicy = [
 export const refundPolicy = [
   {
       title: "1. Return Eligibility",
-      content: "Products are eligible for return within 30 days of receipt, but only if explicitly stated as refundable on the product page or in your invoice. To qualify for a return, items must be unused, in their original condition, and include all packaging materials and attached tags."
+      content: "Products are eligible for return within 7 days of receipt, but only if explicitly stated as refundable on the product page or in your invoice. To qualify for a return, items must be unused, in their original condition, and include all packaging materials and attached tags."
   },
   {
       title: "2. Return Process",
