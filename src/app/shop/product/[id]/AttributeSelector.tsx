@@ -53,7 +53,7 @@ export default function AttributeSelector({
                   {isOutOfStock ? (
                     "Out of Stock"
                   ) : (
-                    <>₹{item.price.toFixed(2)}</>
+                    <>₹{item.price}</>
                   )}
                 </span>
                 {!isOutOfStock && (

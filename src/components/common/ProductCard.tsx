@@ -11,36 +11,6 @@ import axios from "axios";
 import { getimage } from "@/lib/constants";
 import { getProductId } from "@/types/product.utils";
 
-// Global image cache
-const imageCache: { [key: string]: string } = {};
-
-// Load cached images from localStorage on component mount
-const loadCachedImages = () => {
-  try {
-    const cached = localStorage.getItem('productImageCache');
-    if (cached) {
-      const parsedCache = JSON.parse(cached);
-      Object.assign(imageCache, parsedCache);
-    }
-  } catch (error) {
-    console.error('Error loading cached images:', error);
-  }
-};
-
-// Save cache to localStorage
-const saveCacheToStorage = () => {
-  try {
-    localStorage.setItem('productImageCache', JSON.stringify(imageCache));
-  } catch (error) {
-    console.error('Error saving image cache:', error);
-  }
-};
-
-// Load cache on module initialization
-if (typeof window !== 'undefined') {
-  loadCachedImages();
-}
-
 type ProductCardProps = {
   data: Product;
   className?: string;
@@ -60,33 +30,15 @@ export default function ProductCard({ data, className }: ProductCardProps) {
 
     const fetchImageData = async () => {
       try {
-        // Check if image is already in cache
-        if (imageCache[data.fileId]) {
-          if (!isMounted) return;
-          setImageUrl(imageCache[data.fileId]);
-          setImageLoading(false);
-          return;
-        }
-
+        console.log(data.fileId);
         const response = await axios.post(
           getimage,
           { file_id: data.fileId },
-          { 
-            responseType: "blob",
-            headers: {
-              'Cache-Control': 'max-age=31536000', // Cache for 1 year
-            }
-          }
+          { responseType: "blob" }
         );
-        
         if (!isMounted) return;
         
         const url = URL.createObjectURL(response.data);
-        
-        // Add to cache
-        imageCache[data.fileId] = url;
-        saveCacheToStorage();
-        
         setImageUrl(url);
         setImageLoading(false);
       } catch (error) {
@@ -103,8 +55,7 @@ export default function ProductCard({ data, className }: ProductCardProps) {
 
     return () => {
       isMounted = false;
-      // Don't revoke URL if it's in the cache
-      if (imageUrl && !imageCache[data.fileId]) {
+      if (imageUrl) {
         URL.revokeObjectURL(imageUrl);
       }
     };
