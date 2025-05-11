@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
 import ProductListSec from "@/components/common/ProductListSec";
-import PopularCategories from "@/components/homepage/PopularCategories";
 import Hero from "@/components/homepage/Hero";
 import Reviews from "@/components/homepage/Reviews";
 import { Product } from "@/types/product.types";
@@ -11,7 +10,6 @@ import {bestsellers, getimage, newarrivals, reviewsData} from "@/lib/constants";
 export default function Home() {
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
   const [bestSellers, setBestSellers] = useState<Product[]>([]);
-  const [bestFeature, setBestFeature] = useState<Product>({} as Product);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,7 +47,6 @@ export default function Home() {
         setNewArrivals(Array.isArray(newArrivalsData) ? newArrivalsData.map(mapToProduct) : []);
         const bestSellersMapped = Array.isArray(bestSellersData) ? bestSellersData.map(mapToProduct) : [];
         setBestSellers(bestSellersMapped);
-        setBestFeature(bestSellersMapped[0] || null);
         setError(null); 
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
@@ -105,7 +102,7 @@ export default function Home() {
 
   return (
     <>
-      <Hero bestFeature={bestFeature} />
+      <Hero />
 
       <main className="my-[50px] sm:my-[72px]">
 
