@@ -11,10 +11,9 @@ import {
 } from "@/components/ui/navigation-menu";
 import { MenuItem } from "./MenuItem";
 import Image from "next/image";
-import ResTopNavbar from "./ResTopNavbar";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppSelector } from "@/lib/hooks/redux";
-import { Menu, Search, Truck } from "lucide-react";
+import { Search, Truck, ShoppingBag } from "lucide-react";
 
 const data: NavMenu = [
   {
@@ -82,11 +81,14 @@ const TopNavbar = () => {
     <nav className="sticky top-0 bg-white z-20 shadow-sm">
       <div className="flex relative max-w-frame mx-[var(--content-margin)] items-center justify-between py-5 md:py-6 px-4 xl:px-0">
         <div className="flex items-center">
-          {/* Hamburger menu for mobile - Now with explicit Menu icon */}
+          {/* Shop icon for mobile - Replaces hamburger menu */}
           <div className="block md:hidden mr-4">
-            <ResTopNavbar data={data}>
-              <Menu size={24} className="text-black" />
-            </ResTopNavbar>
+            <button 
+              onClick={() => router.push('/shop')}
+              className="p-1 focus:outline-none"
+            >
+              <ShoppingBag size={24} className="text-black" />
+            </button>
           </div>
           
           <Link
