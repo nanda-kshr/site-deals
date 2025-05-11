@@ -11,7 +11,7 @@ const footerLinksData: FooterLinks[] = [
       {
         id: 11,
         label: "about",
-        url: "#",
+        url: "/about",
       },
       {
         id: 12,
@@ -37,22 +37,22 @@ const footerLinksData: FooterLinks[] = [
       {
         id: 21,
         label: "customer support",
-        url: "#",
+        url: "/contact",
       },
       {
         id: 22,
         label: "delivery details",
-        url: "#",
+        url: "/order",
       },
       {
         id: 23,
         label: "terms & conditions",
-        url: "#",
+        url: "/terms",
       },
       {
         id: 24,
         label: "privacy policy",
-        url: "#",
+        url: "/terms",
       },
     ],
   },
