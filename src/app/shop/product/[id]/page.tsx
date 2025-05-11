@@ -57,6 +57,36 @@ interface Product {
   category: string;
 }
 
+// Global image cache
+const imageCache: { [key: string]: string } = {};
+
+// Load cached images from localStorage on component mount
+const loadCachedImages = () => {
+  try {
+    const cached = localStorage.getItem('productImageCache');
+    if (cached) {
+      const parsedCache = JSON.parse(cached);
+      Object.assign(imageCache, parsedCache);
+    }
+  } catch (error) {
+    console.error('Error loading cached images:', error);
+  }
+};
+
+// Save cache to localStorage
+const saveCacheToStorage = () => {
+  try {
+    localStorage.setItem('productImageCache', JSON.stringify(imageCache));
+  } catch (error) {
+    console.error('Error saving image cache:', error);
+  }
+};
+
+// Load cache on module initialization
+if (typeof window !== 'undefined') {
+  loadCachedImages();
+}
+
 // Enhanced Product Skeleton with gradient animation
 function ProductSkeleton() {
   return (
@@ -635,6 +665,12 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       if (!fileId) return null;
 
       try {
+        // Check if image is already in cache
+        if (imageCache[fileId]) {
+          console.log(`Using cached image for fileId: ${fileId}`);
+          return imageCache[fileId];
+        }
+
         console.log(`Fetching image for fileId: ${fileId}`);
         const response = await axios.post(
           getimage,
@@ -643,6 +679,9 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           },
           {
             responseType: "blob",
+            headers: {
+              'Cache-Control': 'max-age=31536000', // Cache for 1 year
+            }
           }
         );
 
@@ -652,7 +691,12 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         }
 
         const url = URL.createObjectURL(response.data);
-        console.log(`Created URL for fileId ${fileId}:`, url);
+        
+        // Add to cache
+        imageCache[fileId] = url;
+        saveCacheToStorage();
+        
+        console.log(`Created and cached URL for fileId ${fileId}:`, url);
         return url;
       } catch (error) {
         console.error(`Failed to load image for fileId ${fileId}:`, error);
@@ -711,9 +755,15 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
     return () => {
       isMounted = false;
-      // Clean up object URLs to prevent memory leaks
-      if (mainImageUrl) URL.revokeObjectURL(mainImageUrl);
-      Object.values(galleryImageUrls).forEach((url) => url && URL.revokeObjectURL(url));
+      // Don't revoke URLs if they're in the cache
+      if (mainImageUrl && !imageCache[product?.fileId || '']) {
+        URL.revokeObjectURL(mainImageUrl);
+      }
+      Object.entries(galleryImageUrls).forEach(([id, url]) => {
+        if (url && !imageCache[id]) {
+          URL.revokeObjectURL(url);
+        }
+      });
     };
   }, [id]);
 
