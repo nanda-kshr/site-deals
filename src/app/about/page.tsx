@@ -111,8 +111,8 @@ export default function AboutPage() {
             Get in Touch
           </h2>
           <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
-            Have questions about our products or services? We're here to help.
-            Reach out to us and we'll get back to you as soon as possible.
+            Have questions about our products or services? We&apos;re here to help.
+            Reach out to us and we&apos;ll get back to you as soon as possible.
           </p>
           <Link
             href="/contact"
