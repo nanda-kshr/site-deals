@@ -23,6 +23,12 @@ const data: NavMenu = [
     label: "On Sale",
     url: "/shop",
     children: [],
+  },{
+    id: 2,
+    type: "MenuItem",
+    label: "Contact Us",
+    url: "/contact",
+    children: [],
   },
 ];
 
