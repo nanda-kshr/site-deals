@@ -485,10 +485,10 @@ export default function OrderPage() {
                         <div className="flex justify-between items-start">
                           <div>
                             <h5 className="font-medium text-black">
-                              {item.productDetails?.name || `Product ${item.productId.slice(-6)}`}
+                              {item.productDetails?.name || `Product ${item.productId.toString().slice(-6)}`}
                             </h5>
                             <p className="text-sm text-gray-600">
-                              Product ID: {item.productId.slice(-6)}
+                              Product ID: {item.productId.toString().slice(-6)}
                             </p>
                           </div>
                           <div className="text-right">

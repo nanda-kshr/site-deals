@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import Order from '@/models/Order';
+import Product from '@/models/Product';
+import mongoose from 'mongoose';
 
 interface TrackRequest {
   orderId: string;
@@ -14,6 +16,11 @@ export async function POST(request: Request) {
 
     if (!orderId) {
       return NextResponse.json({ error: 'Order ID is required' }, { status: 400 });
+    }
+
+    // First ensure Product model is registered
+    if (!mongoose.models.Product) {
+      mongoose.model('Product', Product.schema);
     }
 
     const order = await Order.findById(orderId)
