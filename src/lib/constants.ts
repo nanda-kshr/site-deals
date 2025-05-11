@@ -85,7 +85,7 @@ export const termsAndConditions = [
   },
   {
       title: "3. Order Acceptance",
-      content: "All orders placed through our website are subject to acceptance and availability. We reserve the right to refuse any order without giving reason. Once we accept your order, we will send you an order confirmation email."
+      content: "All orders placed through our website are subject to acceptance and availability. We reserve the right to refuse any order. Once we accept your order, we will send you an order confirmation email."
   },
   {
       title: "4. Pricing and Payment",
@@ -109,7 +109,7 @@ export const termsAndConditions = [
   },
   {
       title: "9. Governing Law",
-      content: "These terms and conditions shall be governed by and construed in accordance with the laws of the United States, and any disputes will be subject to the exclusive jurisdiction of the courts of the United States."
+      content: "These terms and conditions shall be governed by and construed in accordance with the laws of the India, and any disputes will be subject to the exclusive jurisdiction of the courts of the India."
   },
   {
       title: "10. Changes to Terms",
