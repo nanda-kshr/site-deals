@@ -5,6 +5,8 @@ import Product from '@/models/Product';
 
 interface OrderItem {
   productId: string;
+  fileId: string;
+  gallery: string[];
   quantity: number;
   size: string;
   color: string;
@@ -65,9 +67,11 @@ export async function POST(request: Request) {
 
       totalAmount += itemTotal;
 
-      // Add to order items
+      // Add to order items with fileId and gallery
       orderItems.push({
         productId: item.productId,
+        fileId: product.fileId,
+        gallery: product.gallery || [],
         quantity,
         size: item.size,
         color: item.color,

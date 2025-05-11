@@ -127,12 +127,6 @@ export default function Home() {
         <div className="max-w-frame mx-[var(--content-margin)] px-4 xl:px-0">
           <hr className="h-[1px] border-t-black/10 my-10 sm:my-16" />
         </div>
-        <div className="mb-[50px] sm:mb-20">
-
-
-          <PopularCategories />
-
-        </div>
         <Reviews data={reviewsData} />
       </main>
     </>

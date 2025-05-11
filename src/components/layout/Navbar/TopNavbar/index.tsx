@@ -24,13 +24,6 @@ const data: NavMenu = [
     url: "/shop",
     children: [],
   },
-  {
-    id: 2,
-    type: "MenuItem",
-    label: "Track Orders",
-    url: "/order",
-    children: [],
-  },
 ];
 
 const CartBtn = () => {

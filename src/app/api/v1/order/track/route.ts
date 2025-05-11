@@ -18,6 +18,7 @@ export async function POST(request: Request) {
 
     const order = await Order.findById(orderId)
       .select('_id name email phone address items totalAmount status paymentStatus address createdAt')
+      .populate('items.productId', 'name price fileId gallery')
       .lean();
 
     if (!order) {

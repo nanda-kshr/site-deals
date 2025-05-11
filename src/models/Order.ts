@@ -7,6 +7,13 @@ const OrderItemSchema = new mongoose.Schema({
     ref: 'Product',
     required: true
   },
+  fileId: {
+    type: String,
+    required: true
+  },
+  gallery: [{
+    type: String
+  }],
   quantity: {
     type: Number,
     required: true,

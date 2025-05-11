@@ -8,7 +8,8 @@ import { Heart, ShoppingBag, ImageOff } from "lucide-react";
 import { useAppDispatch } from "@/lib/hooks/redux";
 import { addToCart } from "@/lib/features/carts/cartsSlice";
 import axios from "axios";
-import { getimage, gotoproduct } from "@/lib/constants";
+import { getimage } from "@/lib/constants";
+import { getProductId } from "@/types/product.utils";
 
 type ProductCardProps = {
   data: Product;
@@ -29,6 +30,7 @@ export default function ProductCard({ data, className }: ProductCardProps) {
 
     const fetchImageData = async () => {
       try {
+        console.log(data.fileId);
         const response = await axios.post(
           getimage,
           { file_id: data.fileId },
@@ -138,7 +140,7 @@ export default function ProductCard({ data, className }: ProductCardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Link href={`${gotoproduct}/${data._id}`} className="block h-full">
+      <Link href={`/shop/product/${getProductId(data)}`} className="block h-full">
         <div className="relative pt-[100%] overflow-hidden bg-[#FAFAFA]">
           {imageLoading ? (
             <motion.div className="absolute inset-0" initial="initial" animate="animate">
