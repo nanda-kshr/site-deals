@@ -867,7 +867,6 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { icon: <ShieldCheck size={24} />, title: "Secure Payment", desc: "All transactions are encrypted" },
-              { icon: <ArrowLeft size={24} />, title: "Easy Returns", desc: "30-day return policy" },
               { icon: <ShoppingBag size={24} />, title: "Fast Shipping", desc: "2-3 business days" },
               { icon: <Info size={24} />, title: "24/7 Support", desc: "Customer service team" },
             ].map((badge, idx) => (
