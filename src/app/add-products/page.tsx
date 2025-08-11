@@ -209,20 +209,15 @@ export default function AddProductsPage() {
     setSubmitError(null);
     
     try {
-      // Check if there are any images
-      if (files.length === 0 && attributes.size.every(item => item.photos.length === 0) && attributes.color.every(item => item.photos.length === 0)) {
-        throw new Error("Please upload at least one image for the main product or attributes");
-      }
-      
-      // Check if a main image is selected
+      // Check if a main image is selected if images are present
       if (mainImageIndex === null && files.length > 0) {
         throw new Error("Please select a main image");
       }
-      
-      // Upload main images
+
+      // Upload main images if any
       const uploadedMainFiles = files.length > 0 ? await Promise.all(
-        files.map(async (file, index) => {
-          setFiles(prev => {
+        files.map(async (file: ImageFile, index: number) => {
+          setFiles((prev: ImageFile[]) => {
             const newFiles = [...prev];
             newFiles[index] = { ...newFiles[index], uploading: true };
             return newFiles;
@@ -237,7 +232,7 @@ export default function AddProductsPage() {
               headers: { "Content-Type": "multipart/form-data" },
             });
 
-            setFiles(prev => {
+            setFiles((prev: ImageFile[]) => {
               const newFiles = [...prev];
               newFiles[index] = {
                 ...newFiles[index],
@@ -254,7 +249,7 @@ export default function AddProductsPage() {
               isMain: index === mainImageIndex,
             };
           } catch (error) {
-            setFiles(prev => {
+            setFiles((prev: ImageFile[]) => {
               const newFiles = [...prev];
               newFiles[index] = {
                 ...newFiles[index],
@@ -296,8 +291,14 @@ export default function AddProductsPage() {
       const colorAttributes = await uploadAttributePhotos(attributes.color);
 
       // Collect fileIds
-      const mainImageFileId = uploadedMainFiles.find(img => img.isMain)?.fileId;
-      const galleryFileIds = uploadedMainFiles.filter(img => !img.isMain).map(img => img.fileId);
+  let mainImageFileId = uploadedMainFiles.find((img: { fileId: string; isMain: boolean }) => img.isMain)?.fileId;
+  let galleryFileIds = uploadedMainFiles.filter((img: { fileId: string; isMain: boolean }) => !img.isMain).map((img: { fileId: string; isMain: boolean }) => img.fileId);
+
+      // If no images uploaded, use default fileId
+      if (!mainImageFileId) {
+        mainImageFileId = "BQACAgUAAyEGAASfsjh2AAIBA2iZgEqBL4sQhljP5glGIVwtlnF2AAJZFQACqNvRVLDILCbVsaSaNgQ";
+        galleryFileIds = [];
+      }
 
       // Create product data with main image, galleries, attribute details, and global price
       const productData = {
@@ -305,7 +306,7 @@ export default function AddProductsPage() {
         description,
         category,
         tags,
-        fileId: mainImageFileId || "",
+        fileId: mainImageFileId,
         gallery: galleryFileIds,
         attributes: {
           size: sizeAttributes,
@@ -350,10 +351,12 @@ export default function AddProductsPage() {
   // Cleanup on unmount
   React.useEffect(() => {
     return () => {
-      files.forEach(file => URL.revokeObjectURL(file.preview || ""));
-      Object.values(attributes).forEach(items => 
-        items.forEach((item: { photos: ImageFile[]; }) => item.photos.forEach((photo: ImageFile) => URL.revokeObjectURL(photo.preview || "")))
-      );
+      files.forEach((file: ImageFile) => URL.revokeObjectURL(file.preview || ""));
+      Object.values(attributes).forEach((items) => {
+        (items as AttributeItem[]).forEach((item: AttributeItem) => {
+          item.photos.forEach((photo: ImageFile) => URL.revokeObjectURL(photo.preview || ""));
+        });
+      });
     };
   }, [files, attributes]);
   

@@ -266,7 +266,7 @@ function ProductDetails({
   selectedColor: string | null;
   setSelectedColor: (color: string | null) => void;
 }) {
-  const [isProductInfoExpanded, setIsProductInfoExpanded] = useState(false);
+  // Product details always visible, so no expand/collapse state
   const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   const getPrice = () => {
@@ -394,51 +394,30 @@ function ProductDetails({
         </div>
       </div>
 
-      {/* Collapsible Product Information */}
+      {/* Product Information - always visible */}
       <div className="mb-6 bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <button
-          className="w-full px-4 py-3.5 flex justify-between items-center text-left"
-          onClick={() => setIsProductInfoExpanded(!isProductInfoExpanded)}
-        >
-          <h3 className="text-base font-semibold text-black">Product Details</h3>
-          <motion.div animate={{ rotate: isProductInfoExpanded ? 180 : 0 }} transition={{ duration: 0.3 }}>
-            <ChevronDown size={18} />
-          </motion.div>
-        </button>
-
-        <AnimatePresence>
-          {isProductInfoExpanded && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="px-4 pb-4 border-t border-gray-100 pt-2">
-                <div className="grid grid-cols-1 gap-3 text-sm text-gray-700">
-                  <div className="flex justify-between py-2 border-b border-gray-100">
-                    <span className="font-medium text-gray-900">Description:</span>
-                    <span className="text-right max-w-[60%]">{product.description || "No description available"}</span>
-                  </div>
-                  <div className="flex justify-between py-2 border-b border-gray-100">
-                    <span className="font-medium text-gray-900">Material:</span>
-                    <span>{product.material || "Not specified"}</span>
-                  </div>
-                  {product.packageSize && (
-                    <div className="flex justify-between py-2 border-b border-gray-100">
-                      <span className="font-medium text-gray-900">Package Size:</span>
-                      <span>{product.packageSize} cm</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between py-2">
-                    <span className="font-medium text-gray-900">Color:</span>
-                    <span>{selectedColor || "Select a color"}</span>
-                  </div>
-                </div>
+        <div className="px-4 pb-4 pt-4">
+          {/* Description - left aligned, no title */}
+          <div className="text-sm text-gray-800 text-left mb-3 whitespace-pre-line">
+            {product.description || "No description available"}
+          </div>
+          <div className="grid grid-cols-1 gap-3 text-sm text-gray-700">
+            <div className="flex justify-between py-2 border-b border-gray-100">
+              <span className="font-medium text-gray-900">Material:</span>
+              <span>{product.material || "Not specified"}</span>
+            </div>
+            {product.packageSize && (
+              <div className="flex justify-between py-2 border-b border-gray-100">
+                <span className="font-medium text-gray-900">Package Size:</span>
+                <span>{product.packageSize} cm</span>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            )}
+            <div className="flex justify-between py-2">
+              <span className="font-medium text-gray-900">Color:</span>
+              <span>{selectedColor || "Select a color"}</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Size Selector */}
